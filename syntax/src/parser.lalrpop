@@ -1,0 +1,74 @@
+use {ast, symbol};
+
+grammar;
+
+extern {
+    type Error = (usize, String);
+}
+
+pub(crate) File: ast::File = {
+    <items:(<Item> ";")*> => ast::File { <> }
+}
+
+pub(crate) Item: ast::Item = {
+    Sys => ast::Item::Sys(<>),
+    Comp => ast::Item::Comp(<>),
+    TyDef => ast::Item::TyDef(<>),
+}
+
+pub(crate) Sys: ast::Sys = {
+    "sys" <name:Symbol> "{" <stmts:(<Stmt> ";")*> "}" => ast::Sys { <> }
+}
+
+pub(crate) Stmt: ast::Stmt = {
+    Item => ast::Stmt::Item(<>),
+    Read => ast::Stmt::Read(<>),
+    Write => ast::Stmt::Write(<>),
+};
+
+pub(crate) Read: ast::Read = {
+    "read" <comps:Punctuated<Symbol, ",">> => ast::Read { <> }
+};
+
+pub(crate) Write: ast::Write = {
+    "write" <comps:Punctuated<Symbol, ",">> => ast::Write { <> }
+};
+
+pub(crate) Comp: ast::Comp = {
+    "comp" <name:Symbol> <ty:Ty> => ast::Comp { <> }
+};
+
+pub(crate) TyDef: ast::TyDef = {
+    "type" <name:Symbol> <ty:Ty> => ast::TyDef { <> }
+};
+
+pub(crate) Ty: ast::Ty = {
+    "never" => ast::Ty::Never,
+    "unit" => ast::Ty::Unit,
+    "i32" => ast::Ty::I32,
+    Symbol => ast::Ty::TyDef(<>),
+    Struct => ast::Ty::Struct(<>),
+    Enum => ast::Ty::Enum(<>),
+};
+
+pub(crate) Struct: ast::Struct = {
+    "struct" "{" <fields:Punctuated<(<Symbol> <Ty>), ";">> "}" => ast::Struct { <> }
+};
+
+pub(crate) Enum: ast::Enum = {
+    "enum" "{" <fields:Punctuated<(<Symbol> <Ty>), ";">> "}" => ast::Enum { <> }
+};
+
+// Common macros
+Punctuated<T, P>: Vec<T> = {
+    <values:(<T> P)*> <e:T?> => match e {
+        None => values,
+        Some(e) => {
+            let mut values = values;
+            values.push(e);
+            values
+        }
+    }
+};
+
+Symbol: symbol::Symbol = @L r"[[:alpha:]_][[:alnum:]_]*" =>? symbol::Symbol::intern(<>);

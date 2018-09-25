@@ -1,0 +1,12 @@
+[package]
+name = "calegon"
+description = "calegon."
+version = "0.0.0"
+authors = ["Andrew Hickman <andrew.hickman1@sky.com>"]
+repository = "https://github.com/andrewhickman/calegon"
+documentation = "https://docs.rs/calegon"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+[workspace]
+members = ["syntax", "type-check"]

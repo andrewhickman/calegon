@@ -1,0 +1,9 @@
+[package]
+name = "calegon-type-check"
+version = "0.1.0"
+authors = ["Andrew Hickman <andrew.hickman1@sky.com>"]
+
+[dependencies]
+
+[dependencies.calegon-syntax]
+path = "../syntax"

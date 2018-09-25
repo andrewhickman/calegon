@@ -1,0 +1,18 @@
+[package]
+name = "calegon-syntax"
+version = "0.1.0"
+authors = ["Andrew Hickman <andrew.hickman1@sky.com>"]
+
+[dependencies]
+lalrpop-util = "0.16.0"
+regex = "~1"
+seahash = "~3"
+memchr = "~2"
+bytecount = "0.3.2"
+proptest = { version = "0.8.6", optional = true }
+
+[dev-dependencies]
+proptest = "0.8.6"
+
+[build-dependencies]
+lalrpop = "0.16.0"
