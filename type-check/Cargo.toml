@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Andrew Hickman <andrew.hickman1@sky.com>"]
 
 [dependencies]
+seahash = "~3"
+typed-arena = "~1.4"
+hash_hasher = "~1"
+iter-set = "0.2.0"
 
 [dependencies.calegon-syntax]
 path = "../syntax"
