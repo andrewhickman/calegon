@@ -8,6 +8,7 @@ use std::hash::{Hash, Hasher};
 use std::ptr;
 
 use ty::Fields;
+use variance::Polarity;
 
 #[derive(Debug)]
 pub enum Ty<'c> {
@@ -36,6 +37,41 @@ pub enum TyNeg<'c> {
     Struct(Fields<TyNeg<'c>>),
     Recursive(&'c TyNeg<'c>),
 }
+
+impl<'c> Ty<'c> {
+    pub fn polarity(&self) -> Polarity {
+        match self {
+            Ty::Pos(_) => Polarity::Pos,
+            Ty::Neg(_) => Polarity::Neg,
+        }
+    }
+}
+
+/*
+pub fn from_pos(term: &TyPos) -> Self {
+    let inner = match *term {
+        TyPos::Var(idx) => vec![Constructor::Var(idx)],
+        TyPos::I32 => vec![Constructor::I32],
+        TyPos::Fn(_, _) => vec![Constructor::Fn],
+        TyPos::Struct(ref fields) => vec![Constructor::Struct(fields.labels())],
+        _ => vec![],
+    };
+
+    ConstructorSet { inner }
+}
+
+pub fn from_neg(term: &TyNeg) -> Self {
+    let inner = match *term {
+        TyNeg::Var(idx) => vec![Constructor::Var(idx)],
+        TyNeg::I32 => vec![Constructor::I32],
+        TyNeg::Fn(_, _) => vec![Constructor::Fn],
+        TyNeg::Struct(ref fields) => vec![Constructor::Struct(fields.labels())],
+        _ => vec![],
+    };
+
+    ConstructorSet { inner }
+}
+*/
 
 /*
 impl<'c> Hash for &'c TyPos<'c> {

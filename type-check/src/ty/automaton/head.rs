@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use iter_set;
 
+use ty::automaton::StateId;
 use ty::polar::{TyNeg, TyPos};
 use ty::Fields;
 
@@ -9,14 +10,22 @@ pub(in ty::automaton) enum Constructor {
     Fn,
     I32,
     Struct(Fields<()>),
-    Var(u32),
+    Var(StateId),
 }
 
-pub struct ConstructorSet {
+pub(in ty::automaton) struct ConstructorSet {
     inner: Vec<Constructor>,
 }
 
 impl ConstructorSet {
+    pub fn empty() -> Self {
+        ConstructorSet { inner: vec![] }
+    }
+
+    pub fn singleton(con: Constructor) -> Self {
+        ConstructorSet { inner: vec![con] }
+    }
+
     pub fn from_pos(term: &TyPos) -> Self {
         let inner = match *term {
             TyPos::Var(idx) => vec![Constructor::Var(idx)],

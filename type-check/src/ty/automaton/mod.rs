@@ -1,17 +1,33 @@
 mod build;
 mod head;
-mod state;
-
-pub use self::state::{State, StateId};
-
-use ty::polar::{TyNeg, TyPos};
 
 use syntax::Symbol;
 
+use variance::Polarity;
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 enum FieldAlphabet {
-    Symbol(Symbol),
+    Label(Symbol),
     Domain,
     Range,
+}
+
+type StateId = u32;
+
+pub struct State {
+    pol: Polarity,
+    cons: head::ConstructorSet,
+    trans: Vec<(FieldAlphabet, StateId)>,
+}
+
+impl State {
+    fn empty(pol: Polarity) -> Self {
+        State {
+            pol,
+            cons: head::ConstructorSet::empty(),
+            trans: Vec::new(),
+        }
+    }
 }
 
 pub struct Automaton {
