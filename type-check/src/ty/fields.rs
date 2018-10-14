@@ -1,18 +1,22 @@
 use std::cmp::Ordering;
+use std::iter::FromIterator;
+use std::rc::Rc;
 
 use iter_set;
 
 use syntax::Symbol;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Fields<T> {
-    inner: Vec<(Symbol, T)>,
+    inner: Rc<[(Symbol, T)]>,
 }
 
 impl<T> Fields<T> {
-    pub fn new(mut inner: Vec<(Symbol, T)>) -> Self {
-        inner.sort_by_key(key);
-        Fields { inner }
+    pub fn new(mut fields: Vec<(Symbol, T)>) -> Self {
+        fields.sort_by_key(key);
+        Fields {
+            inner: fields.into(),
+        }
     }
 
     pub fn get(&self) -> &[(Symbol, T)] {
@@ -31,40 +35,46 @@ impl<T> Fields<T> {
     }
 
     pub fn labels(&self) -> Fields<()> {
+        self.inner.iter().map(|&(l, _)| (l, ())).collect()
+    }
+
+    pub fn cmp_labels<U>(&self, other: &Fields<U>) -> Option<Ordering> {
+        iter_set::cmp(self.inner.iter().map(key), other.inner.iter().map(key))
+    }
+}
+
+impl<T> Fields<T>
+where
+    T: Clone,
+{
+    pub fn union(&self, other: &Self) -> Self {
+        iter_set::union_by_key(self.inner.iter().cloned(), other.inner.iter().cloned(), key)
+            .collect()
+    }
+
+    pub fn intersection(&self, other: &Self) -> Self {
+        iter_set::intersection_by_key(self.inner.iter().cloned(), other.inner.iter().cloned(), key)
+            .collect()
+    }
+}
+
+impl<T> Clone for Fields<T> {
+    fn clone(&self) -> Self {
         Fields {
-            inner: self.inner.iter().map(|&(l, _)| (l, ())).collect(),
+            inner: self.inner.clone(),
         }
     }
+}
 
-    pub fn union(&mut self, other: &mut Self) {
-        let result = Fields {
-            inner: iter_set::union_by_key(self.inner.drain(..), other.inner.drain(..), key)
-                .collect(),
-        };
-        *self = result;
-    }
-
-    pub fn intersection(&mut self, other: &mut Self) {
-        let result = Fields {
-            inner: iter_set::intersection_by_key(self.inner.drain(..), other.inner.drain(..), key)
-                .collect(),
-        };
-        *self = result;
+impl<T> FromIterator<(Symbol, T)> for Fields<T> {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = (Symbol, T)>,
+    {
+        Fields::new(Vec::from_iter(iter))
     }
 }
 
 fn key<T>(&(key, _): &(Symbol, T)) -> Symbol {
     key
-}
-
-impl<T, U> PartialEq<Fields<U>> for Fields<T> {
-    fn eq(&self, other: &Fields<U>) -> bool {
-        self.partial_cmp(other) == Some(Ordering::Equal)
-    }
-}
-
-impl<T, U> PartialOrd<Fields<U>> for Fields<T> {
-    fn partial_cmp(&self, other: &Fields<U>) -> Option<Ordering> {
-        iter_set::cmp(self.inner.iter().map(key), other.inner.iter().map(key))
-    }
 }

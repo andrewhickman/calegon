@@ -1,134 +1,112 @@
-use ty::automaton::head::{Constructor, ConstructorSet};
-use ty::automaton::{Automaton, FieldAlphabet, State, StateId};
-use ty::polar::{Ty, TyNeg, TyPos, Visitor};
-use ty::Fields;
-use variance::Polarity;
+use std::mem::replace;
 
+use ty::automaton::state::constructor::Constructor;
+use ty::automaton::state::{transition, State, StateId};
+use ty::automaton::Automaton;
+use ty::polar::{Ty, Visitor};
+use ty::Fields;
+use variance::AsPolarity;
+
+#[derive(Default)]
 struct BuildVisitor {
     states: Vec<State>,
-    recs: Vec<StateId>,
+    recs: Vec<(StateId, Vec<StateId>)>,
+    cur: StateId,
 }
 
 impl BuildVisitor {
-    fn next_id(&mut self) -> StateId {
-        self.states.len() as StateId
+    fn current(&self) -> &State {
+        &self.states[self.cur]
     }
 
-    fn current(&mut self) -> &mut State {
-        self.states.last_mut().expect("no current state")
+    fn current_mut(&mut self) -> &mut State {
+        &mut self.states[self.cur]
     }
 
-    fn add_constructor(&mut self, con: Constructor) {
-        let mut cons = ConstructorSet::singleton(con);
-        match self.current().pol {
-            Polarity::Pos => self.current().cons.join(&mut cons),
-            Polarity::Neg => self.current().cons.meet(&mut cons),
-        }
+    fn visit<P: AsPolarity>(&mut self, ty: Ty<P>) -> StateId {
+        let cur = replace(&mut self.cur, self.states.len());
+        self.states.push(State::new(ty.polarity()));
+        ty.accept(self);
+        replace(&mut self.cur, cur)
     }
 }
 
 impl Visitor for BuildVisitor {
-    fn visit_var(&mut self, pol: Polarity, idx: u32) {
-        assert_eq!(self.current().pol, pol);
-
-        let id = self.recs[self.recs.len() - idx as usize];
-        self.add_constructor(Constructor::Var(id));
-    }
-
-    fn visit_join(&mut self, lhs: &TyPos, rhs: &TyPos) {
+    fn visit_add<P: AsPolarity>(&mut self, pol: &P, lhs: Ty<P>, rhs: Ty<P>) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
         lhs.accept(self);
         rhs.accept(self);
     }
 
-    fn visit_meet(&mut self, lhs: &TyNeg, rhs: &TyNeg) {
-        lhs.accept(self);
-        rhs.accept(self);
+    fn visit_zero<P: AsPolarity>(&mut self, pol: &P) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
     }
 
-    fn visit_i32(&mut self, pol: Polarity) {
-        assert_eq!(self.current().pol, pol);
-
-        self.add_constructor(Constructor::I32);
+    fn visit_i32<P: AsPolarity>(&mut self, pol: &P) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.current_mut().add_constructor(Constructor::I32);
     }
 
-    fn visit_fn_pos(&mut self, domain: &TyNeg, range: &TyPos) {
-        let idx = self.states.len() - 1;
-        self.add_constructor(Constructor::Fn);
+    fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: Ty<P::Neg>, range: Ty<P>) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.current_mut().add_constructor(Constructor::Fn);
 
-        let d = self.next_id();
-        self.states[idx].trans.push((FieldAlphabet::Domain, d));
-        self.states.push(State::empty(Polarity::Neg));
-        domain.accept(self);
+        let d = self.visit(domain);
+        self.current_mut()
+            .add_transition(transition::Symbol::Domain, d);
 
-        let r = self.next_id();
-        self.states[idx].trans.push((FieldAlphabet::Range, r));
-        self.states.push(State::empty(Polarity::Pos));
-        range.accept(self);
+        let r = self.visit(range);
+        self.current_mut()
+            .add_transition(transition::Symbol::Range, r);
     }
 
-    fn visit_fn_neg(&mut self, domain: &TyPos, range: &TyNeg) {
-        let idx = self.states.len() - 1;
-        self.add_constructor(Constructor::Fn);
+    fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<Ty<P>>) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.current_mut()
+            .add_constructor(Constructor::Struct(fields.labels()));
 
-        let d = self.next_id();
-        self.states[idx].trans.push((FieldAlphabet::Domain, d));
-        self.states.push(State::empty(Polarity::Pos));
-        domain.accept(self);
-
-        let r = self.next_id();
-        self.states[idx].trans.push((FieldAlphabet::Range, r));
-        self.states.push(State::empty(Polarity::Neg));
-        range.accept(self);
-    }
-
-    fn visit_struct_pos(&mut self, fields: &Fields<TyPos>) {
-        let idx = self.states.len() - 1;
-        self.add_constructor(Constructor::Struct(fields.labels()));
-
-        for &(label, ref ty) in fields.get() {
-            let l = self.next_id();
-            self.states[idx].trans.push((FieldAlphabet::Label(label), l));
-            ty.accept(self);
+        for &(label, ty) in fields.get() {
+            let l = self.visit(ty);
+            self.current_mut()
+                .add_transition(transition::Symbol::Label(label), l);
         }
     }
 
-    fn visit_struct_neg(&mut self, fields: &Fields<TyNeg>) {
-        let idx = self.states.len() - 1;
-        self.add_constructor(Constructor::Struct(fields.labels()));
-
-        for &(label, ref ty) in fields.get() {
-            let l = self.next_id();
-            self.states[idx].trans.push((FieldAlphabet::Label(label), l));
-            ty.accept(self);
+    fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: Ty<P>) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.recs.push((self.cur, Vec::new()));
+        ty.accept(self);
+        for id in self.recs.pop().unwrap().1 {
+            self.states[id] = self.states[id].combine(self.current())
         }
     }
 
-    fn visit_recursive_pos(&mut self, ty: &TyPos) {
-        let id = self.next_id();
-        self.recs.push(id);
-        ty.accept(self);
-        self.recs.pop();
+    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: u32) {
+        assert_eq!(self.current().polarity(), pol.as_polarity());
+        let con = match self.recs.len().checked_sub(idx as usize) {
+            Some(idx) => {
+                let (id, ref mut uses) = self.recs[idx];
+                uses.push(self.cur);
+                Constructor::BoundVar(id)
+            }
+            None => Constructor::UnboundVar(idx),
+        };
+        self.current_mut().add_constructor(con);
     }
+}
 
-    fn visit_recursive_neg(&mut self, ty: &TyNeg) {
-        let id = self.next_id();
-        self.recs.push(id);
-        ty.accept(self);
-        self.recs.pop();
+impl From<BuildVisitor> for Automaton {
+    fn from(builder: BuildVisitor) -> Self {
+        Automaton {
+            states: builder.states,
+        }
     }
 }
 
 impl Automaton {
-    pub fn new(ty: &Ty) -> Self {
-        let mut visitor = BuildVisitor {
-            recs: Vec::new(),
-            states: vec![State::empty(ty.polarity())],
-        };
-
-        ty.accept(&mut visitor);
-
-        Automaton {
-            states: visitor.states,
-        }
+    pub fn new<P: AsPolarity>(ty: Ty<P>) -> Self {
+        let mut builder = BuildVisitor::default();
+        builder.visit(ty);
+        builder.into()
     }
 }

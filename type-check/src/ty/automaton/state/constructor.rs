@@ -2,74 +2,74 @@ use std::cmp::Ordering;
 
 use iter_set;
 
-use ty::automaton::StateId;
-use ty::polar::{TyNeg, TyPos};
+use ty::automaton::state::StateId;
 use ty::Fields;
+use variance::Polarity;
 
+#[derive(Clone, Debug)]
 pub(in ty::automaton) enum Constructor {
     Fn,
     I32,
     Struct(Fields<()>),
-    Var(StateId),
+    BoundVar(StateId),
+    UnboundVar(u32),
 }
 
-pub(in ty::automaton) struct ConstructorSet {
+pub(in ty::automaton::state) struct ConstructorSet {
     inner: Vec<Constructor>,
 }
 
 impl ConstructorSet {
-    pub fn empty() -> Self {
-        ConstructorSet { inner: vec![] }
+    pub fn new() -> Self {
+        ConstructorSet { inner: Vec::new() }
     }
 
-    pub fn singleton(con: Constructor) -> Self {
+    fn singleton(con: Constructor) -> Self {
         ConstructorSet { inner: vec![con] }
     }
 
-    pub fn from_pos(term: &TyPos) -> Self {
-        let inner = match *term {
-            TyPos::Var(idx) => vec![Constructor::Var(idx)],
-            TyPos::I32 => vec![Constructor::I32],
-            TyPos::Fn(_, _) => vec![Constructor::Fn],
-            TyPos::Struct(ref fields) => vec![Constructor::Struct(fields.labels())],
-            _ => vec![],
-        };
-
-        ConstructorSet { inner }
+    pub fn add(&mut self, pol: Polarity, con: Constructor) {
+        match pol {
+            Polarity::Pos => self.join(con),
+            Polarity::Neg => self.meet(con),
+        }
     }
 
-    pub fn from_neg(term: &TyNeg) -> Self {
-        let inner = match *term {
-            TyNeg::Var(idx) => vec![Constructor::Var(idx)],
-            TyNeg::I32 => vec![Constructor::I32],
-            TyNeg::Fn(_, _) => vec![Constructor::Fn],
-            TyNeg::Struct(ref fields) => vec![Constructor::Struct(fields.labels())],
-            _ => vec![],
-        };
-
-        ConstructorSet { inner }
+    pub fn add_set(&self, pol: Polarity, other: &Self) -> Self {
+        match pol {
+            Polarity::Pos => self.join_set(other),
+            Polarity::Neg => self.meet_set(other),
+        }
     }
 
-    pub fn join(&mut self, other: &mut Self) {
-        let result = ConstructorSet {
+    fn join(&mut self, other: Constructor) {
+        // TODO: optimize
+        *self = self.join_set(&ConstructorSet::singleton(other))
+    }
+
+    fn join_set(&self, other: &Self) -> Self {
+        ConstructorSet {
             inner: iter_set::union_by(
-                self.inner.drain(..),
-                other.inner.drain(..),
+                self.inner.iter().cloned(),
+                other.inner.iter().cloned(),
                 Constructor::join,
             ).collect(),
-        };
-        *self = result;
+        }
     }
 
-    pub fn meet(&mut self, other: &mut Self) {
-        let result = ConstructorSet {
+    fn meet(&mut self, other: Constructor) {
+        // TODO: optimize
+        *self = self.meet_set(&ConstructorSet::singleton(other))
+    }
+
+    fn meet_set(&self, other: &Self) -> Self {
+        ConstructorSet {
             inner: iter_set::intersection_by(
-                self.inner.drain(..),
-                other.inner.drain(..),
+                self.inner.iter().cloned(),
+                other.inner.iter().cloned(),
                 Constructor::meet,
             ).collect(),
-        };
-        *self = result;
+        }
     }
 }
 
@@ -78,7 +78,8 @@ impl Constructor {
         use self::Constructor::*;
 
         match (self, other) {
-            (Var(a), Var(b)) => Ord::cmp(a, b),
+            (BoundVar(a), BoundVar(b)) => Ord::cmp(a, b),
+            (UnboundVar(a), UnboundVar(b)) => Ord::cmp(a, b),
             (Struct(a), Struct(b)) => {
                 a.intersection(b);
                 Ordering::Equal
@@ -91,7 +92,8 @@ impl Constructor {
         use self::Constructor::*;
 
         match (self, other) {
-            (Var(a), Var(b)) => Ord::cmp(a, b),
+            (BoundVar(a), BoundVar(b)) => Ord::cmp(a, b),
+            (UnboundVar(a), UnboundVar(b)) => Ord::cmp(a, b),
             (Struct(a), Struct(b)) => {
                 a.union(b);
                 Ordering::Equal
@@ -112,10 +114,11 @@ impl PartialOrd for Constructor {
         use self::Constructor::*;
 
         match (self, other) {
-            (Var(l), Var(r)) if l == r => Some(Ordering::Equal),
+            (BoundVar(a), BoundVar(b)) if a == b => Some(Ordering::Equal),
+            (UnboundVar(a), UnboundVar(b)) if a == b => Some(Ordering::Equal),
             (I32, I32) => Some(Ordering::Equal),
             (Fn, Fn) => Some(Ordering::Equal),
-            (Struct(l), Struct(r)) => l.partial_cmp(r),
+            (Struct(l), Struct(r)) => l.cmp_labels(r),
             _ => None,
         }
     }
