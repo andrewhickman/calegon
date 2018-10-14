@@ -1,6 +1,9 @@
 mod context;
+#[cfg(test)]
+mod tests;
 mod visitor;
 
+pub use self::context::Context;
 pub use self::visitor::Visitor;
 
 use std::hash::{Hash, Hasher};
@@ -22,7 +25,7 @@ enum TyKind<'c, P: AsPolarity + 'c> {
     Fn(Ty<'c, P::Neg>, Ty<'c, P>),
     Struct(Fields<Ty<'c, P>>),
     Recursive(Ty<'c, P>),
-    Var(u32),
+    Var(i32),
 }
 
 impl<'c, P: AsPolarity + 'c> Ty<'c, P> {

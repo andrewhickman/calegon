@@ -42,7 +42,7 @@ impl fmt::Display for Polarity {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Pos;
 
 impl AsPolarity for Pos {
@@ -67,7 +67,7 @@ impl fmt::Display for Pos {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Neg;
 
 impl AsPolarity for Neg {

@@ -1,16 +1,18 @@
+use std::fmt;
+
 use iter_set;
 use syntax;
 
 use ty::automaton::state::StateId;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(in ty::automaton) enum Symbol {
     Label(syntax::Symbol),
     Domain,
     Range,
 }
 
-#[derive(Copy, Clone, Debug, Hash, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
 struct Transition {
     symbol: Symbol,
     to: StateId,
@@ -38,5 +40,27 @@ impl TransitionSet {
                 .cloned()
                 .collect(),
         }
+    }
+}
+
+impl fmt::Debug for Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Symbol::Label(l) => write!(f, "{}", l),
+            Symbol::Domain => write!(f, "𝒹"),
+            Symbol::Range => write!(f, "𝓇"),
+        }
+    }
+}
+
+impl fmt::Debug for Transition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?} → {:?}", self.symbol, self.to)
+    }
+}
+
+impl fmt::Debug for TransitionSet {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_set().entries(self.inner.iter()).finish()
     }
 }

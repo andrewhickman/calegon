@@ -82,9 +82,9 @@ mod tests {
         #[test]
         fn roundtrip(string in "[[:alnum:]]+") {
             let symbol = Symbol::intern(0, &string).unwrap();
-            assert_eq!(symbol.as_str(), &string);
+            prop_assert_eq!(symbol.as_str(), &string);
             let symbol2 = Symbol::intern(0, &string).unwrap();
-            assert_eq!(symbol, symbol2);
+            prop_assert_eq!(symbol, symbol2);
         }
     }
 }

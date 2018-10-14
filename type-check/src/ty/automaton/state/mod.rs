@@ -7,6 +7,7 @@ use variance::Polarity;
 
 pub(in ty::automaton) type StateId = usize;
 
+#[derive(Debug)]
 pub(in ty::automaton) struct State {
     pol: Polarity,
     cons: ConstructorSet,

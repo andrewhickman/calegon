@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::fmt;
 
 use iter_set;
 
@@ -11,8 +12,7 @@ pub(in ty::automaton) enum Constructor {
     Fn,
     I32,
     Struct(Fields<()>),
-    BoundVar(StateId),
-    UnboundVar(u32),
+    Var(i32),
 }
 
 pub(in ty::automaton::state) struct ConstructorSet {
@@ -64,7 +64,7 @@ impl ConstructorSet {
 
     fn meet_set(&self, other: &Self) -> Self {
         ConstructorSet {
-            inner: iter_set::intersection_by(
+            inner: iter_set::union_by(
                 self.inner.iter().cloned(),
                 other.inner.iter().cloned(),
                 Constructor::meet,
@@ -78,8 +78,7 @@ impl Constructor {
         use self::Constructor::*;
 
         match (self, other) {
-            (BoundVar(a), BoundVar(b)) => Ord::cmp(a, b),
-            (UnboundVar(a), UnboundVar(b)) => Ord::cmp(a, b),
+            (Var(a), Var(b)) => Ord::cmp(a, b),
             (Struct(a), Struct(b)) => {
                 a.intersection(b);
                 Ordering::Equal
@@ -92,14 +91,19 @@ impl Constructor {
         use self::Constructor::*;
 
         match (self, other) {
-            (BoundVar(a), BoundVar(b)) => Ord::cmp(a, b),
-            (UnboundVar(a), UnboundVar(b)) => Ord::cmp(a, b),
+            (Var(a), Var(b)) => Ord::cmp(a, b),
             (Struct(a), Struct(b)) => {
                 a.union(b);
                 Ordering::Equal
             }
             (l, r) => compare_discriminants(l, r),
         }
+    }
+}
+
+impl fmt::Debug for ConstructorSet {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_set().entries(self.inner.iter()).finish()
     }
 }
 
@@ -114,8 +118,7 @@ impl PartialOrd for Constructor {
         use self::Constructor::*;
 
         match (self, other) {
-            (BoundVar(a), BoundVar(b)) if a == b => Some(Ordering::Equal),
-            (UnboundVar(a), UnboundVar(b)) if a == b => Some(Ordering::Equal),
+            (Var(a), Var(b)) if a == b => Some(Ordering::Equal),
             (I32, I32) => Some(Ordering::Equal),
             (Fn, Fn) => Some(Ordering::Equal),
             (Struct(l), Struct(r)) => l.cmp_labels(r),

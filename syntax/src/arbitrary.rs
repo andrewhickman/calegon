@@ -8,7 +8,7 @@ use {ast, Symbol};
 fn arb_symbol() -> impl Strategy<Value = Symbol> {
     string_regex("[[:alpha:]][[:alnum:]]{0,5}")
         .unwrap()
-        .prop_filter("symbols is a keyword", |string| {
+        .prop_filter("symbol is a keyword", |string| {
             string != "comp"
                 && string != "enum"
                 && string != "i32"
@@ -32,7 +32,7 @@ pub fn arb_item() -> BoxedStrategy<ast::Item> {
     prop_oneof![
         arb_comp().prop_map(ast::Item::Comp),
         arb_ty_def().prop_map(ast::Item::TyDef),
-    ].prop_recursive(3, 32, 16, |inner| {
+    ].prop_recursive(3, 32, 30, |inner| {
         arb_sys_impl(inner).prop_map(ast::Item::Sys)
     }).boxed()
 }

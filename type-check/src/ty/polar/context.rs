@@ -1,26 +1,54 @@
+use std::cell::RefCell;
+use std::collections::HashSet;
+use std::hash::BuildHasherDefault;
+
+use seahash::SeaHasher;
 use typed_arena::Arena;
 
 use ty::polar::{Ty, TyKind};
 use variance::{Neg, Pos};
 
 pub struct Context<'c> {
-    // TODO: caching
+    cache: RefCell<HashSet<&'c InternedTy<'c>, BuildHasherDefault<SeaHasher>>>,
     arena: Arena<InternedTy<'c>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 enum InternedTy<'c> {
     Neg(TyKind<'c, Neg>),
     Pos(TyKind<'c, Pos>),
 }
 
 impl<'c> Context<'c> {
-    pub(in ty::polar) fn intern_pos(&'c self, ty: TyKind<'c, Pos>) -> Ty<'c, Pos> {
-        self.arena.alloc(InternedTy::Pos(ty)).unwrap_pos()
+    pub fn new() -> Self {
+        Context {
+            cache: Default::default(),
+            arena: Arena::new(),
+        }
     }
+}
 
-    pub(in ty::polar) fn intern_neg(&'c self, ty: TyKind<'c, Neg>) -> Ty<'c, Neg> {
-        self.arena.alloc(InternedTy::Neg(ty)).unwrap_neg()
+impl<'c> TyKind<'c, Pos> {
+    pub fn intern(self, ctx: &'c Context<'c>) -> Ty<'c, Pos> {
+        let ty = InternedTy::Pos(self);
+        if let Some(cached) = ctx.cache.borrow().get(&ty) {
+            return cached.unwrap_pos();
+        }
+        let interned = ctx.arena.alloc(ty);
+        ctx.cache.borrow_mut().insert(interned);
+        interned.unwrap_pos()
+    }
+}
+
+impl<'c> TyKind<'c, Neg> {
+    pub fn intern(self, ctx: &'c Context<'c>) -> Ty<'c, Neg> {
+        let ty = InternedTy::Neg(self);
+        if let Some(cached) = ctx.cache.borrow().get(&ty) {
+            return cached.unwrap_neg();
+        }
+        let interned = ctx.arena.alloc(ty);
+        ctx.cache.borrow_mut().insert(interned);
+        interned.unwrap_neg()
     }
 }
 

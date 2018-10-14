@@ -9,7 +9,7 @@ pub trait Visitor {
     fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: Ty<P::Neg>, range: Ty<P>);
     fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<Ty<P>>);
     fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: Ty<P>);
-    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: u32);
+    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: i32);
 }
 
 impl<'c, P: AsPolarity + 'c> Ty<'c, P> {

@@ -5,27 +5,35 @@ use ty::automaton::state::{transition, State, StateId};
 use ty::automaton::Automaton;
 use ty::polar::{Ty, Visitor};
 use ty::Fields;
-use variance::AsPolarity;
+use variance::{AsPolarity, Polarity};
 
-#[derive(Default)]
 struct BuildVisitor {
     states: Vec<State>,
-    recs: Vec<(StateId, Vec<StateId>)>,
+    recs: Vec<StateId>,
     cur: StateId,
+    cur_pol: Polarity,
 }
 
 impl BuildVisitor {
-    fn current(&self) -> &State {
-        &self.states[self.cur]
+    fn new() -> Self {
+        BuildVisitor {
+            states: Vec::new(),
+            recs: Vec::new(),
+            cur: 0,
+            cur_pol: Polarity::Pos,
+        }
     }
 
-    fn current_mut(&mut self) -> &mut State {
+    fn current(&mut self) -> &mut State {
+        if self.cur == self.states.len() {
+            self.states.push(State::new(self.cur_pol));
+        }
         &mut self.states[self.cur]
     }
 
     fn visit<P: AsPolarity>(&mut self, ty: Ty<P>) -> StateId {
         let cur = replace(&mut self.cur, self.states.len());
-        self.states.push(State::new(ty.polarity()));
+        self.cur_pol = ty.polarity();
         ty.accept(self);
         replace(&mut self.cur, cur)
     }
@@ -44,54 +52,47 @@ impl Visitor for BuildVisitor {
 
     fn visit_i32<P: AsPolarity>(&mut self, pol: &P) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
-        self.current_mut().add_constructor(Constructor::I32);
+        self.current().add_constructor(Constructor::I32);
     }
 
     fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: Ty<P::Neg>, range: Ty<P>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
-        self.current_mut().add_constructor(Constructor::Fn);
+        self.current().add_constructor(Constructor::Fn);
 
         let d = self.visit(domain);
-        self.current_mut()
-            .add_transition(transition::Symbol::Domain, d);
+        self.current().add_transition(transition::Symbol::Domain, d);
 
         let r = self.visit(range);
-        self.current_mut()
-            .add_transition(transition::Symbol::Range, r);
+        self.current().add_transition(transition::Symbol::Range, r);
     }
 
     fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<Ty<P>>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
-        self.current_mut()
+        self.current()
             .add_constructor(Constructor::Struct(fields.labels()));
 
         for &(label, ty) in fields.get() {
             let l = self.visit(ty);
-            self.current_mut()
+            self.current()
                 .add_transition(transition::Symbol::Label(label), l);
         }
     }
 
     fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: Ty<P>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
-        self.recs.push((self.cur, Vec::new()));
+        self.recs.push(self.cur);
         ty.accept(self);
-        for id in self.recs.pop().unwrap().1 {
-            self.states[id] = self.states[id].combine(self.current())
-        }
+        self.recs.pop();
     }
 
-    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: u32) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
-        let con = match self.recs.len().checked_sub(idx as usize) {
-            Some(idx) => {
-                let (id, ref mut uses) = self.recs[idx];
-                uses.push(self.cur);
-                Constructor::BoundVar(id)
-            }
-            None => Constructor::UnboundVar(idx),
+    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: i32) {
+        //        assert_eq!(self.current().polarity(), pol.as_polarity());
+        let idx = (self.recs.len() - 1) as i32 - idx;
+        assert!(idx >= 0);
+        let con = match self.recs.get(idx as usize) {
+            Some(&id) => self.cur = id,
+            None => self.current().add_constructor(Constructor::Var(idx)),
         };
-        self.current_mut().add_constructor(con);
     }
 }
 
@@ -105,7 +106,7 @@ impl From<BuildVisitor> for Automaton {
 
 impl Automaton {
     pub fn new<P: AsPolarity>(ty: Ty<P>) -> Self {
-        let mut builder = BuildVisitor::default();
+        let mut builder = BuildVisitor::new();
         builder.visit(ty);
         builder.into()
     }

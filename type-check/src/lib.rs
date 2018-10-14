@@ -1,6 +1,11 @@
+#![allow(dead_code)]
+
 extern crate calegon_syntax as syntax;
 extern crate hash_hasher;
 extern crate iter_set;
+#[cfg(test)]
+#[macro_use]
+extern crate proptest;
 extern crate seahash;
 extern crate typed_arena;
 

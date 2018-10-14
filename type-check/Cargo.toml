@@ -11,3 +11,10 @@ iter-set = "0.2.0"
 
 [dependencies.calegon-syntax]
 path = "../syntax"
+
+[dev-dependencies]
+proptest = "0.8.6"
+
+[dev-dependencies.calegon-syntax]
+path = "../syntax"
+features = ["proptest"]
