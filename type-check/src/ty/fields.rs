@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::iter::FromIterator;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use iter_set;
 
@@ -8,7 +8,7 @@ use syntax::Symbol;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Fields<T> {
-    inner: Rc<[(Symbol, T)]>,
+    inner: Arc<[(Symbol, T)]>,
 }
 
 impl<T> Fields<T> {

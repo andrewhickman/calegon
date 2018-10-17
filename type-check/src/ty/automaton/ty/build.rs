@@ -2,9 +2,8 @@ use std::mem::replace;
 
 use ty::automaton::state::constructor::Constructor;
 use ty::automaton::state::{transition, State, StateId};
-use ty::automaton::Automaton;
-use ty::polar::{Ty, Visitor};
-use ty::Fields;
+use ty::automaton::Ty;
+use ty::{polar, Fields, Var};
 use variance::{AsPolarity, Polarity};
 
 struct BuildVisitor {
@@ -15,12 +14,12 @@ struct BuildVisitor {
 }
 
 impl BuildVisitor {
-    fn new() -> Self {
+    fn new(cur_pol: Polarity) -> Self {
         BuildVisitor {
             states: Vec::new(),
             recs: Vec::new(),
             cur: 0,
-            cur_pol: Polarity::Pos,
+            cur_pol,
         }
     }
 
@@ -31,7 +30,7 @@ impl BuildVisitor {
         &mut self.states[self.cur]
     }
 
-    fn visit<P: AsPolarity>(&mut self, ty: Ty<P>) -> StateId {
+    fn visit<P: AsPolarity>(&mut self, ty: polar::Ty<P>) -> StateId {
         let cur = replace(&mut self.cur, self.states.len());
         self.cur_pol = ty.polarity();
         ty.accept(self);
@@ -39,8 +38,8 @@ impl BuildVisitor {
     }
 }
 
-impl Visitor for BuildVisitor {
-    fn visit_add<P: AsPolarity>(&mut self, pol: &P, lhs: Ty<P>, rhs: Ty<P>) {
+impl polar::Visitor for BuildVisitor {
+    fn visit_add<P: AsPolarity>(&mut self, pol: &P, lhs: polar::Ty<P>, rhs: polar::Ty<P>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
         lhs.accept(self);
         rhs.accept(self);
@@ -55,7 +54,7 @@ impl Visitor for BuildVisitor {
         self.current().add_constructor(Constructor::I32);
     }
 
-    fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: Ty<P::Neg>, range: Ty<P>) {
+    fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: polar::Ty<P::Neg>, range: polar::Ty<P>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
         self.current().add_constructor(Constructor::Fn);
 
@@ -66,7 +65,7 @@ impl Visitor for BuildVisitor {
         self.current().add_transition(transition::Symbol::Range, r);
     }
 
-    fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<Ty<P>>) {
+    fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<polar::Ty<P>>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
         self.current()
             .add_constructor(Constructor::Struct(fields.labels()));
@@ -78,35 +77,34 @@ impl Visitor for BuildVisitor {
         }
     }
 
-    fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: Ty<P>) {
+    fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: polar::Ty<P>) {
         assert_eq!(self.current().polarity(), pol.as_polarity());
         self.recs.push(self.cur);
         ty.accept(self);
         self.recs.pop();
     }
 
-    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: i32) {
-        //        assert_eq!(self.current().polarity(), pol.as_polarity());
-        let idx = (self.recs.len() - 1) as i32 - idx;
-        assert!(idx >= 0);
-        let con = match self.recs.get(idx as usize) {
-            Some(&id) => self.cur = id,
-            None => self.current().add_constructor(Constructor::Var(idx)),
-        };
+    fn visit_var<P: AsPolarity>(&mut self, pol: &P, var: Var) {
+        if let Some(binding) = var.binding(self.recs.len()) {
+            self.cur = self.recs[binding];
+        } else {
+            self.current().add_constructor(Constructor::Var(var));
+        }
+        assert_eq!(self.current().polarity(), pol.as_polarity());
     }
 }
 
-impl From<BuildVisitor> for Automaton {
+impl From<BuildVisitor> for Ty {
     fn from(builder: BuildVisitor) -> Self {
-        Automaton {
+        Ty {
             states: builder.states,
         }
     }
 }
 
-impl Automaton {
-    pub fn new<P: AsPolarity>(ty: Ty<P>) -> Self {
-        let mut builder = BuildVisitor::new();
+impl Ty {
+    pub fn new<P: AsPolarity>(ty: polar::Ty<P>) -> Self {
+        let mut builder = BuildVisitor::new(ty.polarity());
         builder.visit(ty);
         builder.into()
     }

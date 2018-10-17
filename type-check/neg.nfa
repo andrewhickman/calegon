@@ -1,0 +1,11 @@
+[
+    State {
+        pol: Neg,
+        cons: {
+            Var(
+                β
+            )
+        },
+        trans: {}
+    }
+]

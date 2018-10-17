@@ -3,8 +3,7 @@ use std::fmt;
 
 use iter_set;
 
-use ty::automaton::state::StateId;
-use ty::Fields;
+use ty::{Fields, Var};
 use variance::Polarity;
 
 #[derive(Clone, Debug)]
@@ -12,7 +11,7 @@ pub(in ty::automaton) enum Constructor {
     Fn,
     I32,
     Struct(Fields<()>),
-    Var(i32),
+    Var(Var),
 }
 
 pub(in ty::automaton::state) struct ConstructorSet {

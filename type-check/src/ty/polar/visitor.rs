@@ -1,5 +1,5 @@
 use ty::polar::{Ty, TyKind};
-use ty::Fields;
+use ty::{Fields, Var};
 use variance::AsPolarity;
 
 pub trait Visitor {
@@ -9,7 +9,7 @@ pub trait Visitor {
     fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: Ty<P::Neg>, range: Ty<P>);
     fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<Ty<P>>);
     fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: Ty<P>);
-    fn visit_var<P: AsPolarity>(&mut self, pol: &P, idx: i32);
+    fn visit_var<P: AsPolarity>(&mut self, pol: &P, var: Var);
 }
 
 impl<'c, P: AsPolarity + 'c> Ty<'c, P> {
@@ -21,7 +21,7 @@ impl<'c, P: AsPolarity + 'c> Ty<'c, P> {
             TyKind::Fn(domain, range) => visitor.visit_fn(&self.pol, domain, range),
             TyKind::Struct(ref fields) => visitor.visit_struct(&self.pol, fields),
             TyKind::Recursive(ty) => visitor.visit_recursive(&self.pol, ty),
-            TyKind::Var(idx) => visitor.visit_var(&self.pol, idx),
+            TyKind::Var(var) => visitor.visit_var(&self.pol, var),
         }
     }
 }

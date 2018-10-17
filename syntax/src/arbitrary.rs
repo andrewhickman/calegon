@@ -5,7 +5,7 @@ use proptest::string::string_regex;
 
 use {ast, Symbol};
 
-fn arb_symbol() -> impl Strategy<Value = Symbol> {
+pub fn arb_symbol() -> impl Strategy<Value = Symbol> {
     string_regex("[[:alpha:]][[:alnum:]]{0,5}")
         .unwrap()
         .prop_filter("symbol is a keyword", |string| {

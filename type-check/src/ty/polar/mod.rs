@@ -8,7 +8,7 @@ pub use self::visitor::Visitor;
 
 use std::hash::{Hash, Hasher};
 
-use ty::Fields;
+use ty::{Fields, Var};
 use variance::{AsPolarity, Polarity};
 
 #[derive(Copy, Clone, Debug)]
@@ -19,13 +19,13 @@ pub struct Ty<'c, P: AsPolarity + 'c> {
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 enum TyKind<'c, P: AsPolarity + 'c> {
-    Add(Ty<'c, P>, Ty<'c, P>),
     Zero,
     I32,
+    Add(Ty<'c, P>, Ty<'c, P>),
     Fn(Ty<'c, P::Neg>, Ty<'c, P>),
     Struct(Fields<Ty<'c, P>>),
     Recursive(Ty<'c, P>),
-    Var(i32),
+    Var(Var),
 }
 
 impl<'c, P: AsPolarity + 'c> Ty<'c, P> {

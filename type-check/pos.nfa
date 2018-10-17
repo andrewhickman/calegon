@@ -1,0 +1,57 @@
+[
+    State {
+        pol: Pos,
+        cons: {
+            Struct(
+                Fields {
+                    inner: [
+                        (
+                            Symbol(
+                                302
+                            ),
+                            ()
+                        ),
+                        (
+                            Symbol(
+                                303
+                            ),
+                            ()
+                        ),
+                        (
+                            Symbol(
+                                304
+                            ),
+                            ()
+                        )
+                    ]
+                }
+            )
+        },
+        trans: {
+            QdoU8M → 1,
+            dO → 2,
+            bKuQ → 3
+        }
+    },
+    State {
+        pol: Pos,
+        cons: {
+            Var(
+                β
+            )
+        },
+        trans: {}
+    },
+    State {
+        pol: Pos,
+        cons: {},
+        trans: {}
+    },
+    State {
+        pol: Pos,
+        cons: {
+            I32
+        },
+        trans: {}
+    }
+]

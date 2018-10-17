@@ -14,6 +14,7 @@ path = "../syntax"
 
 [dev-dependencies]
 proptest = "0.8.6"
+lazy_static = "~1"
 
 [dev-dependencies.calegon-syntax]
 path = "../syntax"

@@ -6,6 +6,9 @@ extern crate iter_set;
 #[cfg(test)]
 #[macro_use]
 extern crate proptest;
+#[cfg(test)]
+#[macro_use]
+extern crate lazy_static;
 extern crate seahash;
 extern crate typed_arena;
 
