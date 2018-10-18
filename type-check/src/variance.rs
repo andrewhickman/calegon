@@ -1,7 +1,7 @@
 use std::{fmt, ops};
 
 pub trait AsPolarity:
-    Sized + fmt::Display + fmt::Debug + ops::Neg<Output = <Self as AsPolarity>::Neg> + Copy + Clone
+    Sized + fmt::Display + fmt::Debug + ops::Neg<Output = <Self as AsPolarity>::Neg> + Copy
 {
     type Neg: AsPolarity<Neg = Self>;
 
@@ -42,7 +42,7 @@ impl fmt::Display for Polarity {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash)]
 pub struct Pos;
 
 impl AsPolarity for Pos {
@@ -67,7 +67,7 @@ impl fmt::Display for Pos {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash)]
 pub struct Neg;
 
 impl AsPolarity for Neg {

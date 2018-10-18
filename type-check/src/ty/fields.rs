@@ -5,6 +5,8 @@ use std::sync::Arc;
 use iter_set;
 
 use syntax::Symbol;
+use ty::polar::{Ty, Visitor};
+use variance::AsPolarity;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Fields<T> {
@@ -40,6 +42,14 @@ impl<T> Fields<T> {
 
     pub fn cmp_labels<U>(&self, other: &Fields<U>) -> Option<Ordering> {
         iter_set::cmp(self.inner.iter().map(key), other.inner.iter().map(key))
+    }
+}
+
+impl<'c, P: AsPolarity + 'c> Fields<Ty<'c, P>> {
+    pub fn accept<V: Visitor + ?Sized>(&self, visitor: &mut V) {
+        for &(_, ty) in self.get() {
+            ty.accept(visitor)
+        }
     }
 }
 

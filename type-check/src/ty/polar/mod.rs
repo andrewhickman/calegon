@@ -1,3 +1,4 @@
+mod check;
 mod context;
 #[cfg(test)]
 mod tests;
