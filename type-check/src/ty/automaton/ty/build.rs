@@ -24,38 +24,44 @@ impl BuildVisitor {
     }
 
     fn current(&mut self) -> &mut State {
-        if self.cur == self.states.len() {
-            self.states.push(State::new(self.cur_pol));
-        }
         &mut self.states[self.cur]
+    }
+
+    fn merge_state<P: AsPolarity>(&mut self, pol: &P) {
+        if self.cur == self.states.len() {
+            self.states.push(State::new(pol.as_polarity()));
+        } else {
+            debug_assert_eq!(self.current().polarity(), pol.as_polarity());
+        }
     }
 
     fn visit<P: AsPolarity>(&mut self, ty: polar::Ty<P>) -> StateId {
         let cur = replace(&mut self.cur, self.states.len());
         self.cur_pol = ty.polarity();
         ty.accept(self);
+        debug_assert!(self.cur != self.states.len());
         replace(&mut self.cur, cur)
     }
 }
 
 impl polar::Visitor for BuildVisitor {
     fn visit_add<P: AsPolarity>(&mut self, pol: &P, lhs: polar::Ty<P>, rhs: polar::Ty<P>) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.merge_state(pol);
         lhs.accept(self);
         rhs.accept(self);
     }
 
     fn visit_zero<P: AsPolarity>(&mut self, pol: &P) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.merge_state(pol);
     }
 
     fn visit_i32<P: AsPolarity>(&mut self, pol: &P) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.merge_state(pol);
         self.current().add_constructor(Constructor::I32);
     }
 
     fn visit_fn<P: AsPolarity>(&mut self, pol: &P, domain: polar::Ty<P::Neg>, range: polar::Ty<P>) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.merge_state(pol);
         self.current().add_constructor(Constructor::Fn);
 
         let d = self.visit(domain);
@@ -66,7 +72,7 @@ impl polar::Visitor for BuildVisitor {
     }
 
     fn visit_struct<P: AsPolarity>(&mut self, pol: &P, fields: &Fields<polar::Ty<P>>) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.merge_state(pol);
         self.current()
             .add_constructor(Constructor::Struct(fields.labels()));
 
@@ -78,7 +84,7 @@ impl polar::Visitor for BuildVisitor {
     }
 
     fn visit_recursive<P: AsPolarity>(&mut self, pol: &P, ty: polar::Ty<P>) {
-        assert_eq!(self.current().polarity(), pol.as_polarity());
+        self.merge_state(pol);
         self.recs.push(self.cur);
         ty.accept(self);
         self.recs.pop();
@@ -87,10 +93,11 @@ impl polar::Visitor for BuildVisitor {
     fn visit_var<P: AsPolarity>(&mut self, pol: &P, var: Var) {
         if let Some(binding) = var.binding(self.recs.len()) {
             self.cur = self.recs[binding];
+            debug_assert_eq!(self.current().polarity(), pol.as_polarity());
         } else {
+            self.merge_state(pol);
             self.current().add_constructor(Constructor::Var(var));
         }
-        assert_eq!(self.current().polarity(), pol.as_polarity());
     }
 }
 
