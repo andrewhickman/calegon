@@ -1,15 +1,17 @@
 use std::cmp::Ordering;
 use std::fmt;
 
+#[cfg(test)]
+use iter_set;
 use syntax;
 
 use ty::automaton::state::StateId;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(in ty::automaton) enum Symbol {
-    Label(syntax::Symbol),
     Domain,
     Range,
+    Label(syntax::Symbol),
 }
 
 #[derive(Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
@@ -18,7 +20,7 @@ pub(in ty::automaton) struct Transition {
     pub to: StateId,
 }
 
-pub(in ty::automaton::state) struct TransitionSet {
+pub(in ty::automaton) struct TransitionSet {
     inner: Vec<Transition>,
 }
 
@@ -34,21 +36,33 @@ impl TransitionSet {
         }
     }
 
+    pub fn union(&mut self, other: &Self) {
+        self.inner.extend(&other.inner);
+        self.inner.sort();
+        self.inner.dedup();
+    }
+
+    pub fn split_at_domain(&self) -> (Vec<StateId>, Vec<StateId>) {
+        let split = self
+            .inner
+            .binary_search_by(|tr| Ord::cmp(&tr.symbol, &Symbol::Domain).then(Ordering::Less))
+            .unwrap_err();
+        let (domain, rest) = self.inner.split_at(split);
+        (
+            domain.iter().map(|tr| tr.to).collect(),
+            rest.iter().map(|tr| tr.to).collect(),
+        )
+    }
+
     #[cfg(test)]
-    pub fn get(&self, symbol: Symbol) -> &[Transition] {
-        let hi = match self
+    pub fn get_for(&self, symbol: Symbol) -> &[Transition] {
+        let hi = self
             .inner
             .binary_search_by(|tr| Ord::cmp(&tr.symbol, &symbol).then(Ordering::Less))
-        {
-            Ok(_) => unreachable!(),
-            Err(idx) => idx,
-        };
-        let lo = match self.inner[..hi]
+            .unwrap_err();
+        let lo = self.inner[..hi]
             .binary_search_by(|tr| Ord::cmp(&tr.symbol, &symbol).then(Ordering::Greater))
-        {
-            Ok(_) => unreachable!(),
-            Err(idx) => idx,
-        };
+            .unwrap_err();
         &self.inner[lo..hi]
     }
 }

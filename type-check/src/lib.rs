@@ -1,6 +1,9 @@
 extern crate calegon_syntax as syntax;
 extern crate hash_hasher;
+extern crate im;
 extern crate iter_set;
+#[macro_use]
+extern crate itertools;
 #[cfg(test)]
 #[macro_use]
 extern crate proptest;

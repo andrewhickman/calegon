@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+pub use self::tests::*;
+
 use std::fmt;
 
 use ty::automaton::build::build;
@@ -9,7 +12,7 @@ use ty::polar;
 use variance::AsPolarity;
 
 pub struct Ty {
-    states: Vec<State>,
+    states: Vec<State<()>>,
     start: StateId,
 }
 
@@ -20,7 +23,7 @@ impl fmt::Debug for Ty {
 }
 
 impl Ty {
-    fn start(&self) -> &State {
+    fn start(&self) -> &State<()> {
         &self.states[self.start]
     }
 

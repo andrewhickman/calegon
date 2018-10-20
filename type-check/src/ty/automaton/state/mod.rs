@@ -2,24 +2,27 @@ pub(in ty::automaton) mod constructor;
 pub(in ty::automaton) mod transition;
 
 use ty::automaton::state::constructor::{Constructor, ConstructorSet};
-use ty::automaton::state::transition::{Transition, TransitionSet};
+use ty::automaton::state::transition::TransitionSet;
+use ty::Var;
 use variance::Polarity;
 
 pub(in ty::automaton) type StateId = usize;
 
 #[derive(Debug)]
-pub(in ty::automaton) struct State {
+pub(in ty::automaton) struct State<T> {
     pol: Polarity,
     cons: ConstructorSet,
     trans: TransitionSet,
+    pub flow: T,
 }
 
-impl State {
+impl<T: Default> State<T> {
     pub fn new(pol: Polarity) -> Self {
         State {
             pol,
             cons: ConstructorSet::new(),
             trans: TransitionSet::new(),
+            flow: T::default(),
         }
     }
 
@@ -35,13 +38,21 @@ impl State {
         self.trans.add(symbol, to)
     }
 
-    #[cfg(test)]
-    pub fn get_transitions(&self, symbol: transition::Symbol) -> &[Transition] {
-        self.trans.get(symbol)
+    pub fn take_vars(&mut self) -> Vec<Var> {
+        self.cons.take_vars()
     }
 
-    #[cfg(test)]
-    pub fn has_constructor(&self, con: &Constructor) -> bool {
-        self.cons.has(con)
+    pub fn merge(&mut self, other: &Self) {
+        debug_assert_eq!(self.polarity(), other.polarity());
+        self.trans.union(&other.trans);
+        self.cons.add_set(self.pol, &other.cons);
+    }
+
+    pub fn constructors(&self) -> &ConstructorSet {
+        &self.cons
+    }
+
+    pub fn transitions(&self) -> &TransitionSet {
+        &self.trans
     }
 }

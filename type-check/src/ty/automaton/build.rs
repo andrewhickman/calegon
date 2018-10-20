@@ -5,21 +5,21 @@ use ty::automaton::state::{transition, State, StateId};
 use ty::{polar, Fields, Var};
 use variance::AsPolarity;
 
-pub(in ty::automaton) fn build<P: AsPolarity>(
-    states: &mut Vec<State>,
+pub(in ty::automaton) fn build<P: AsPolarity, T: Default>(
+    states: &mut Vec<State<T>>,
     ty: polar::Ty<P>,
 ) -> StateId {
     BuildVisitor::new(states).visit(ty)
 }
 
-struct BuildVisitor<'a> {
-    states: &'a mut Vec<State>,
+struct BuildVisitor<'a, T: 'a> {
+    states: &'a mut Vec<State<T>>,
     recs: Vec<StateId>,
     cur: StateId,
 }
 
-impl<'a> BuildVisitor<'a> {
-    fn new(states: &'a mut Vec<State>) -> Self {
+impl<'a, T: Default + 'a> BuildVisitor<'a, T> {
+    fn new(states: &'a mut Vec<State<T>>) -> Self {
         BuildVisitor {
             states,
             recs: Vec::new(),
@@ -27,7 +27,7 @@ impl<'a> BuildVisitor<'a> {
         }
     }
 
-    fn current(&mut self) -> &mut State {
+    fn current(&mut self) -> &mut State<T> {
         &mut self.states[self.cur]
     }
 
@@ -47,7 +47,7 @@ impl<'a> BuildVisitor<'a> {
     }
 }
 
-impl<'a> polar::Visitor for BuildVisitor<'a> {
+impl<'a, T: Default + 'a> polar::Visitor for BuildVisitor<'a, T> {
     fn visit_add<P: AsPolarity>(&mut self, pol: &P, lhs: polar::Ty<P>, rhs: polar::Ty<P>) {
         self.set_state(pol);
         lhs.accept(self);
