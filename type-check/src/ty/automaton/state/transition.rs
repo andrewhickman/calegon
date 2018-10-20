@@ -1,6 +1,6 @@
+use std::cmp::Ordering;
 use std::fmt;
 
-use iter_set;
 use syntax;
 
 use ty::automaton::state::StateId;
@@ -13,9 +13,9 @@ pub(in ty::automaton) enum Symbol {
 }
 
 #[derive(Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
-struct Transition {
-    symbol: Symbol,
-    to: StateId,
+pub(in ty::automaton) struct Transition {
+    pub symbol: Symbol,
+    pub to: StateId,
 }
 
 pub(in ty::automaton::state) struct TransitionSet {
@@ -34,12 +34,22 @@ impl TransitionSet {
         }
     }
 
-    pub fn union(&self, other: &Self) -> Self {
-        TransitionSet {
-            inner: iter_set::union(&self.inner, &other.inner)
-                .cloned()
-                .collect(),
-        }
+    #[cfg(test)]
+    pub fn get(&self, symbol: Symbol) -> &[Transition] {
+        let hi = match self
+            .inner
+            .binary_search_by(|tr| Ord::cmp(&tr.symbol, &symbol).then(Ordering::Less))
+        {
+            Ok(_) => unreachable!(),
+            Err(idx) => idx,
+        };
+        let lo = match self.inner[..hi]
+            .binary_search_by(|tr| Ord::cmp(&tr.symbol, &symbol).then(Ordering::Greater))
+        {
+            Ok(_) => unreachable!(),
+            Err(idx) => idx,
+        };
+        &self.inner[lo..hi]
     }
 }
 

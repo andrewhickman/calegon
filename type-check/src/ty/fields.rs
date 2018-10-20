@@ -13,6 +13,12 @@ pub struct Fields<T> {
     inner: Arc<[(Symbol, T)]>,
 }
 
+impl<T> Default for Fields<T> {
+    fn default() -> Self {
+        Fields::new(Vec::new())
+    }
+}
+
 impl<T> Fields<T> {
     pub fn new(mut fields: Vec<(Symbol, T)>) -> Self {
         fields.sort_by_key(key);

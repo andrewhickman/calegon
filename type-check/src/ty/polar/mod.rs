@@ -5,6 +5,8 @@ mod tests;
 mod visitor;
 
 pub use self::context::Context;
+#[cfg(test)]
+pub use self::tests::*;
 pub use self::visitor::Visitor;
 
 use std::hash::{Hash, Hasher};

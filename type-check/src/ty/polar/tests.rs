@@ -7,7 +7,6 @@ use proptest::prelude::*;
 use proptest::strategy::Just;
 use syntax::{arb_symbol, Symbol};
 
-use ty::automaton;
 use ty::polar::{Ty, TyKind};
 use ty::{Fields, Var};
 use variance::{AsPolarity, Neg, Pos};
@@ -20,11 +19,11 @@ pub fn arb_ty_neg() -> impl Strategy<Value = Ty<'static, Neg>> {
     arb_ty::<Neg>()
 }
 
-pub fn zero_pos() -> Ty<'static, Pos> {
+pub fn bottom() -> Ty<'static, Pos> {
     intern(TyKind::Zero)
 }
 
-pub fn zero_neg() -> Ty<'static, Neg> {
+pub fn top() -> Ty<'static, Neg> {
     intern(TyKind::Zero)
 }
 
@@ -36,11 +35,11 @@ pub fn i32_neg() -> Ty<'static, Neg> {
     intern(TyKind::I32)
 }
 
-pub fn add_pos(lhs: Ty<'static, Pos>, rhs: Ty<'static, Pos>) -> Ty<'static, Pos> {
+pub fn join(lhs: Ty<'static, Pos>, rhs: Ty<'static, Pos>) -> Ty<'static, Pos> {
     intern(TyKind::Add(lhs, rhs))
 }
 
-pub fn add_neg(lhs: Ty<'static, Neg>, rhs: Ty<'static, Neg>) -> Ty<'static, Neg> {
+pub fn meet(lhs: Ty<'static, Neg>, rhs: Ty<'static, Neg>) -> Ty<'static, Neg> {
     intern(TyKind::Add(lhs, rhs))
 }
 
@@ -163,23 +162,11 @@ where
 #[test]
 fn guardedness() {
     assert!(recursive_pos(fn_pos(i32_neg(), var_pos(0))).check());
-    assert!(!recursive_pos(add_pos(i32_pos(), var_pos(0))).check());
+    assert!(!recursive_pos(join(i32_pos(), var_pos(0))).check());
 }
 
 #[test]
 fn covariance() {
     assert!(recursive_pos(fn_pos(fn_neg(var_pos(0), i32_neg()), i32_pos())).check());
     assert!(!recursive_pos(fn_pos(var_neg(0), i32_pos())).check());
-}
-
-proptest!{
-    #[test]
-    fn proptest_construct_nfa_pos(ty in arb_ty_pos()) {
-        automaton::Ty::new(ty);
-    }
-
-    #[test]
-    fn proptest_construct_nfa_neg(ty in arb_ty_neg()) {
-        automaton::Ty::new(ty);
-    }
 }
