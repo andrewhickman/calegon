@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate calegon_syntax as syntax;
 extern crate hash_hasher;
 extern crate im;
@@ -17,3 +19,5 @@ pub mod resolve;
 pub mod ty;
 
 mod variance;
+
+type Label = syntax::Symbol;

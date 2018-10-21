@@ -5,11 +5,12 @@ use std::sync::Mutex;
 use proptest::collection::vec;
 use proptest::prelude::*;
 use proptest::strategy::Just;
-use syntax::{arb_symbol, Symbol};
+use syntax::arb_symbol;
 
 use ty::polar::{Ty, TyKind};
 use ty::{Fields, Var};
 use variance::{AsPolarity, Neg, Pos};
+use Label;
 
 pub fn arb_ty_pos() -> impl Strategy<Value = Ty<'static, Pos>> {
     arb_ty::<Pos>()
@@ -51,11 +52,11 @@ pub fn fn_neg(domain: Ty<'static, Pos>, range: Ty<'static, Neg>) -> Ty<'static, 
     intern(TyKind::Fn(domain, range))
 }
 
-pub fn struct_pos(fields: Vec<(Symbol, Ty<'static, Pos>)>) -> Ty<'static, Pos> {
+pub fn struct_pos(fields: Vec<(Label, Ty<'static, Pos>)>) -> Ty<'static, Pos> {
     intern(TyKind::Struct(Fields::new(fields)))
 }
 
-pub fn struct_neg(fields: Vec<(Symbol, Ty<'static, Neg>)>) -> Ty<'static, Neg> {
+pub fn struct_neg(fields: Vec<(Label, Ty<'static, Neg>)>) -> Ty<'static, Neg> {
     intern(TyKind::Struct(Fields::new(fields)))
 }
 

@@ -4,13 +4,13 @@ use std::sync::Arc;
 
 use iter_set;
 
-use syntax::Symbol;
 use ty::polar::{Ty, Visitor};
 use variance::AsPolarity;
+use Label;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct Fields<T> {
-    inner: Arc<[(Symbol, T)]>,
+    inner: Arc<[(Label, T)]>,
 }
 
 impl<T> Default for Fields<T> {
@@ -20,18 +20,18 @@ impl<T> Default for Fields<T> {
 }
 
 impl<T> Fields<T> {
-    pub fn new(mut fields: Vec<(Symbol, T)>) -> Self {
+    pub fn new(mut fields: Vec<(Label, T)>) -> Self {
         fields.sort_by_key(key);
         Fields {
             inner: fields.into(),
         }
     }
 
-    pub fn get(&self) -> &[(Symbol, T)] {
+    pub fn get(&self) -> &[(Label, T)] {
         &self.inner
     }
 
-    pub fn get_value(&self, k: Symbol) -> Option<&T> {
+    pub fn get_value(&self, k: Label) -> Option<&T> {
         match self.inner.binary_search_by_key(&k, key) {
             Ok(idx) => Some(&self.inner[idx].1),
             Err(_) => None,
@@ -82,15 +82,15 @@ impl<T> Clone for Fields<T> {
     }
 }
 
-impl<T> FromIterator<(Symbol, T)> for Fields<T> {
+impl<T> FromIterator<(Label, T)> for Fields<T> {
     fn from_iter<I>(iter: I) -> Self
     where
-        I: IntoIterator<Item = (Symbol, T)>,
+        I: IntoIterator<Item = (Label, T)>,
     {
         Fields::new(Vec::from_iter(iter))
     }
 }
 
-fn key<T>(&(key, _): &(Symbol, T)) -> Symbol {
+fn key<T>(&(key, _): &(Label, T)) -> Label {
     key
 }

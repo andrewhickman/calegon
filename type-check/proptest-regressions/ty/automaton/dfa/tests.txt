@@ -4,5 +4,4 @@
 #
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
-xs 2644698065 438462703 3940375736 1271392795 # shrinks to ty = Ty { kind: Zero, pol: Neg }
-xs 4159417422 2193252853 1630826342 1368718604 # shrinks to ty = Ty { kind: Zero, pol: Pos }
+xs 2725831552 1267562808 570903870 1659194846 # shrinks to nfa = Ty { states: [State { pol: Pos, cons: {Struct(Fields { inner: [(Symbol(5), ())] })}, trans: {A → 1}, flow: {} }, State { pol: Pos, cons: {}, trans: {}, flow: {} }], start: 0 }

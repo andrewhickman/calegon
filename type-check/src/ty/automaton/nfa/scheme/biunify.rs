@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
+use ty::automaton::nfa::Scheme;
 use ty::automaton::state::StateId;
-use ty::automaton::Scheme;
 use variance::Polarity;
 
 impl Scheme {
@@ -21,10 +21,10 @@ impl Scheme {
             {
                 return Err(());
             }
-            for to in self.states[qn].flow.clone() {
+            for to in self.states[qn].flow().clone() {
                 self.merge(to, qp);
             }
-            for from in self.states[qp].flow.clone() {
+            for from in self.states[qp].flow().clone() {
                 self.merge(from, qn)
             }
             let (domn, restp) = self.states[qp].transitions().split_at_domain();

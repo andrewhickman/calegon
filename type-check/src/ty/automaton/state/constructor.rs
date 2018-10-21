@@ -15,7 +15,7 @@ pub(in ty::automaton) enum Constructor {
     Var(Var),
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub(in ty::automaton) struct ConstructorSet {
     f: bool,
     i: bool,

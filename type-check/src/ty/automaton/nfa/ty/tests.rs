@@ -1,8 +1,8 @@
 use proptest::prelude::*;
 
+use ty::automaton::nfa::Ty;
 use ty::automaton::state::constructor::Constructor;
 use ty::automaton::state::transition;
-use ty::automaton::Ty;
 use ty::polar;
 use ty::Var;
 use variance::Polarity;

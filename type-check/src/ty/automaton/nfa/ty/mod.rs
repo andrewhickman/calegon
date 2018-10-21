@@ -4,27 +4,28 @@ mod tests;
 #[cfg(test)]
 pub use self::tests::*;
 
-use std::fmt;
-
-use ty::automaton::build::build;
+use ty::automaton::nfa::build::build;
 use ty::automaton::state::{State, StateId};
 use ty::polar;
 use variance::AsPolarity;
 
+#[derive(Debug)]
 pub struct Ty {
-    states: Vec<State<()>>,
+    states: Vec<State>,
     start: StateId,
 }
 
-impl fmt::Debug for Ty {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.states.fmt(f)
-    }
-}
-
 impl Ty {
-    fn start(&self) -> &State<()> {
+    pub(in ty::automaton) fn start(&self) -> &State {
         &self.states[self.start]
+    }
+
+    pub(in ty::automaton) fn start_id(&self) -> StateId {
+        self.start
+    }
+
+    pub(in ty::automaton) fn states(&self) -> &[State] {
+        &self.states
     }
 
     pub fn new<P: AsPolarity>(ty: polar::Ty<P>) -> Self {

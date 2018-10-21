@@ -1,17 +1,14 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-#[cfg(test)]
-use iter_set;
-use syntax;
-
 use ty::automaton::state::StateId;
+use Label;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub(in ty::automaton) enum Symbol {
     Domain,
     Range,
-    Label(syntax::Symbol),
+    Label(Label),
 }
 
 #[derive(Copy, Clone, Hash, PartialOrd, Ord, PartialEq, Eq)]
@@ -20,6 +17,7 @@ pub(in ty::automaton) struct Transition {
     pub to: StateId,
 }
 
+#[derive(Clone)]
 pub(in ty::automaton) struct TransitionSet {
     inner: Vec<Transition>,
 }
@@ -48,13 +46,17 @@ impl TransitionSet {
             .binary_search_by(|tr| Ord::cmp(&tr.symbol, &Symbol::Domain).then(Ordering::Less))
             .unwrap_err();
         let (domain, rest) = self.inner.split_at(split);
+        debug_assert!(domain.iter().all(|tr| tr.symbol == Symbol::Domain));
         (
             domain.iter().map(|tr| tr.to).collect(),
             rest.iter().map(|tr| tr.to).collect(),
         )
     }
 
-    #[cfg(test)]
+    pub fn get(&self) -> &[Transition] {
+        &self.inner
+    }
+
     pub fn get_for(&self, symbol: Symbol) -> &[Transition] {
         let hi = self
             .inner

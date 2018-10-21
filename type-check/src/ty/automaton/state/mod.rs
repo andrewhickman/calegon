@@ -1,29 +1,45 @@
 pub(in ty::automaton) mod constructor;
+pub(in ty::automaton) mod flow;
 pub(in ty::automaton) mod transition;
 
 use ty::automaton::state::constructor::{Constructor, ConstructorSet};
+use ty::automaton::state::flow::FlowSet;
 use ty::automaton::state::transition::TransitionSet;
 use ty::Var;
 use variance::Polarity;
 
 pub(in ty::automaton) type StateId = usize;
 
-#[derive(Debug)]
-pub(in ty::automaton) struct State<T> {
+pub(in ty::automaton) const REJECT: StateId = usize::max_value();
+
+#[derive(Debug, Clone)]
+pub(in ty::automaton) struct State {
     pol: Polarity,
     cons: ConstructorSet,
-    trans: TransitionSet,
-    pub flow: T,
+    pub(in ty::automaton) trans: TransitionSet,
+    flow: FlowSet,
 }
 
-impl<T: Default> State<T> {
+impl State {
     pub fn new(pol: Polarity) -> Self {
         State {
             pol,
             cons: ConstructorSet::new(),
             trans: TransitionSet::new(),
-            flow: T::default(),
+            flow: FlowSet::new(),
         }
+    }
+
+    pub fn merged<'a, I>(states: I) -> Self
+    where
+        I: IntoIterator<Item = &'a Self>,
+    {
+        let mut states = states.into_iter();
+        let mut result = states.next().expect("cannot merge 0 states").clone();
+        for state in states {
+            result.merge(state);
+        }
+        result
     }
 
     pub fn polarity(&self) -> Polarity {
@@ -54,5 +70,9 @@ impl<T: Default> State<T> {
 
     pub fn transitions(&self) -> &TransitionSet {
         &self.trans
+    }
+
+    pub fn flow(&self) -> &FlowSet {
+        &self.flow
     }
 }

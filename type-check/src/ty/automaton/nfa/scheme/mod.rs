@@ -1,20 +1,19 @@
 mod biunify;
-mod flow;
 #[cfg(test)]
 mod tests;
 
 #[cfg(test)]
 pub use self::tests::*;
 
-use ty::automaton::build::build;
-use ty::automaton::scheme::flow::FlowSet;
-use ty::automaton::state::{State, StateId};
+use ty::automaton::nfa::build::build;
+use ty::automaton::state::StateId;
+use ty::automaton::state::{flow, State};
 use ty::polar;
 use variance::{Neg, Pos};
 
 #[derive(Debug)]
 pub struct Scheme {
-    states: Vec<State<FlowSet>>,
+    states: Vec<State>,
     env: Vec<StateId>,
     expr: StateId,
 }

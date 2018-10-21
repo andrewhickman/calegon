@@ -1,9 +1,8 @@
 use std::collections::HashSet;
 
 use proptest::collection::vec;
-use proptest::prelude::*;
 
-use ty::automaton::Scheme;
+use ty::automaton::nfa::Scheme;
 use ty::polar;
 
 prop_compose! {

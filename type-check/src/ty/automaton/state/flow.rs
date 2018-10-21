@@ -3,9 +3,9 @@ use im::HashSet;
 use ty::automaton::state::{State, StateId};
 use variance::Polarity;
 
-pub(in ty::automaton::scheme) type FlowSet = HashSet<StateId>;
+pub(in ty::automaton) type FlowSet = HashSet<StateId>;
 
-pub(in ty::automaton::scheme) fn populate(states: &mut [State<FlowSet>]) {
+pub(in ty::automaton) fn populate(states: &mut [State]) {
     let mut map: Vec<(Vec<StateId>, Vec<StateId>)> = Vec::new();
     for (id, state) in states.iter_mut().enumerate() {
         for var in state.take_vars() {
@@ -29,7 +29,7 @@ pub(in ty::automaton::scheme) fn populate(states: &mut [State<FlowSet>]) {
     }
 }
 
-pub(in ty::automaton::scheme) fn merge(states: &mut [State<FlowSet>], q1: StateId, q2: StateId) {
+pub(in ty::automaton) fn merge(states: &mut [State], q1: StateId, q2: StateId) {
     let flow1 = states[q1].flow.clone();
     let flow2 = states[q2].flow.clone();
     for &q in &flow2 {
