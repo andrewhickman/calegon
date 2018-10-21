@@ -13,11 +13,12 @@ pub(in ty::automaton) type StateId = usize;
 pub(in ty::automaton) const REJECT: StateId = usize::max_value();
 
 #[derive(Debug, Clone)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub(in ty::automaton) struct State {
     pol: Polarity,
-    cons: ConstructorSet,
+    pub(in ty::automaton) cons: ConstructorSet,
     pub(in ty::automaton) trans: TransitionSet,
-    flow: FlowSet,
+    pub(in ty::automaton) flow: FlowSet,
 }
 
 impl State {
@@ -70,9 +71,5 @@ impl State {
 
     pub fn transitions(&self) -> &TransitionSet {
         &self.trans
-    }
-
-    pub fn flow(&self) -> &FlowSet {
-        &self.flow
     }
 }

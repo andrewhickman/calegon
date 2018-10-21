@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 
-use ty::automaton::state::StateId;
+use ty::automaton::state::{self, StateId};
 use Label;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -18,6 +18,7 @@ pub(in ty::automaton) struct Transition {
 }
 
 #[derive(Clone)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub(in ty::automaton) struct TransitionSet {
     inner: Vec<Transition>,
 }
@@ -57,7 +58,16 @@ impl TransitionSet {
         &self.inner
     }
 
-    pub fn get_for(&self, symbol: Symbol) -> &[Transition] {
+    pub fn getd(&self, symbol: Symbol) -> StateId {
+        let getn = self.getn(symbol);
+        match getn.len() {
+            0 => state::REJECT,
+            1 => getn[0].to,
+            _ => panic!("not a dfa"),
+        }
+    }
+
+    pub fn getn(&self, symbol: Symbol) -> &[Transition] {
         let hi = self
             .inner
             .binary_search_by(|tr| Ord::cmp(&tr.symbol, &symbol).then(Ordering::Less))

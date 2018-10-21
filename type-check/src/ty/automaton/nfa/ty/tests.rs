@@ -25,7 +25,7 @@ fn test() {
     assert!(ty.start().constructors().has(&Constructor::Fn));
 
     let range = {
-        let range = ty.start().transitions().get_for(transition::Symbol::Range);
+        let range = ty.start().transitions().getn(transition::Symbol::Range);
         assert_eq!(range.len(), 1);
         range[0].to
     };
@@ -37,7 +37,7 @@ fn test() {
     );
 
     let domain = {
-        let domain = ty.start().transitions().get_for(transition::Symbol::Domain);
+        let domain = ty.start().transitions().getn(transition::Symbol::Domain);
         assert_eq!(domain.len(), 1);
         domain[0].to
     };
@@ -47,7 +47,7 @@ fn test() {
     let range = {
         let range = ty.states[domain]
             .transitions()
-            .get_for(transition::Symbol::Range);
+            .getn(transition::Symbol::Range);
         assert_eq!(range.len(), 1);
         range[0].to
     };
@@ -61,7 +61,7 @@ fn test() {
     let domain = {
         let domain = ty.states[domain]
             .transitions()
-            .get_for(transition::Symbol::Domain);
+            .getn(transition::Symbol::Domain);
         assert_eq!(domain.len(), 1);
         domain[0].to
     };

@@ -16,6 +16,7 @@ pub(in ty::automaton) enum Constructor {
 }
 
 #[derive(Default, Clone)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub(in ty::automaton) struct ConstructorSet {
     f: bool,
     i: bool,
@@ -69,7 +70,6 @@ impl ConstructorSet {
         iproduct!(self.get(), other.get()).all(|(l, r)| l <= r)
     }
 
-    #[cfg(test)]
     pub fn has(&self, con: &Constructor) -> bool {
         match con {
             Constructor::Fn => self.f,
@@ -77,6 +77,10 @@ impl ConstructorSet {
             Constructor::Var(var) => self.vars.binary_search(var).is_ok(),
             Constructor::Struct(fields) => self.fields.as_ref() == Some(fields),
         }
+    }
+
+    pub fn has_struct(&self) -> Option<Fields<()>> {
+        self.fields.clone()
     }
 
     fn get(&self) -> Vec<Constructor> {
