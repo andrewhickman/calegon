@@ -38,6 +38,18 @@ impl Scheme {
             s1.merge(s2);
         }
     }
+
+    pub(in ty::automaton) fn states(&self) -> &[State] {
+        &self.states
+    }
+
+    pub fn expr(&self) -> StateId {
+        self.expr
+    }
+
+    pub fn env(&self) -> &[StateId] {
+        &self.env
+    }
 }
 
 fn index2<T>(slice: &mut [T], i: usize, j: usize) -> (&mut T, &mut T) {

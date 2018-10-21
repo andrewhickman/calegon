@@ -4,6 +4,7 @@ mod scheme;
 mod tests;
 mod ty;
 
-pub use self::ty::Ty;
+pub use self::scheme::Scheme;
+pub use self::ty::*;
 
 pub(in ty::automaton) use self::reduce::reduce;

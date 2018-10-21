@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+xs 112270130 1311710082 3948101648 3945743659 # shrinks to (mut scheme, q1, _) = (Scheme { states: [State { pol: Pos, cons: {}, trans: {}, flow: {} }, State { pol: Neg, cons: {}, trans: {}, flow: {} }], env: [1], expr: 0 }, 0, 0)

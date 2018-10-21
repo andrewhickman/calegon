@@ -14,7 +14,7 @@ pub(in ty::automaton) fn reduce(
     dfa_states.reserve(nfa_states.len());
 
     let dfa_start = dfa_states.len();
-    let mut stack = vec![nfa_start];
+    let mut stack = vec![dfa_start];
     dfa_states.push(nfa_states[nfa_start].clone());
     let mut cache = HashMap::new();
     cache.insert(vec![nfa_start], dfa_start);

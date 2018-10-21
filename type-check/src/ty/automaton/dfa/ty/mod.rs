@@ -12,7 +12,7 @@ impl Ty {
         &self.states[self.start]
     }
 
-    pub fn new(nfa: nfa::Ty) -> Self {
+    pub fn new(nfa: &nfa::Ty) -> Self {
         let mut states = Vec::new();
         let start = dfa::reduce(&mut states, nfa.states(), nfa.start_id());
         Ty { states, start }

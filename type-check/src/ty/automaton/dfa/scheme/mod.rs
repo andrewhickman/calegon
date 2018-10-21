@@ -1,12 +1,16 @@
+#[cfg(test)]
+mod tests;
+
 use std::cmp::Ordering::*;
 use std::collections::HashSet;
 
 use ty::automaton::state::constructor::Constructor;
 use ty::automaton::state::transition::Symbol;
 use ty::automaton::state::{State, StateId};
+use ty::automaton::{dfa, nfa};
 use variance::Polarity;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Scheme {
     states: Vec<State>,
     env: Vec<StateId>,
@@ -14,6 +18,17 @@ pub struct Scheme {
 }
 
 impl Scheme {
+    pub fn new(nfa: &nfa::Scheme) -> Self {
+        let mut states = Vec::new();
+        let expr = dfa::reduce(&mut states, nfa.states(), nfa.expr());
+        let env = nfa
+            .env()
+            .iter()
+            .map(|&id| dfa::reduce(&mut states, nfa.states(), id))
+            .collect();
+        Scheme { states, expr, env }
+    }
+
     pub fn subsume(
         &mut self,
         seen: &mut HashSet<(StateId, StateId)>,
