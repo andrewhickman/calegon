@@ -3,24 +3,22 @@ use std::mem::replace;
 use ty::automaton::state::constructor::Constructor;
 use ty::automaton::state::State;
 use ty::automaton::state::{transition, StateId};
+use ty::automaton::Automaton;
 use ty::{polar, Fields, Var};
 use variance::AsPolarity;
 
-pub(in ty::automaton) fn build<P: AsPolarity>(
-    states: &mut Vec<State>,
-    ty: polar::Ty<P>,
-) -> StateId {
+pub(in ty::automaton) fn build<P: AsPolarity>(states: &mut Automaton, ty: polar::Ty<P>) -> StateId {
     BuildVisitor::new(states).visit(ty)
 }
 
 struct BuildVisitor<'a> {
-    states: &'a mut Vec<State>,
+    states: &'a mut Automaton,
     recs: Vec<StateId>,
     cur: StateId,
 }
 
 impl<'a> BuildVisitor<'a> {
-    fn new(states: &'a mut Vec<State>) -> Self {
+    fn new(states: &'a mut Automaton) -> Self {
         BuildVisitor {
             states,
             recs: Vec::new(),
@@ -34,7 +32,7 @@ impl<'a> BuildVisitor<'a> {
 
     fn set_state<P: AsPolarity>(&mut self, pol: &P) {
         if self.cur == self.states.len() {
-            self.states.push(State::new(pol.as_polarity()));
+            self.states.add(State::new(pol.as_polarity()));
         } else {
             debug_assert_eq!(self.current().polarity(), pol.as_polarity());
         }

@@ -22,6 +22,6 @@ proptest!{
         let mut seen = HashSet::new();
         let qp = scheme.expr;
         let qn = scheme.env[0];
-        let _ = scheme.biunify(&mut seen, qp, qn);
+        let _ = scheme.as_mut().biunify(&mut seen, qp, qn);
     }
 }

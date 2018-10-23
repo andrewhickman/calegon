@@ -1,20 +1,32 @@
-use ty::automaton::state::{State, StateId};
-use ty::automaton::{dfa, nfa};
+use ty::automaton::state::StateId;
+use ty::automaton::{nfa, Automaton};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ty {
-    states: Vec<State>,
+    auto: Automaton,
     start: StateId,
 }
 
 impl Ty {
-    fn start(&self) -> &State {
-        &self.states[self.start]
+    fn start(&self) -> StateId {
+        self.start
     }
 
     pub fn new(nfa: &nfa::Ty) -> Self {
-        let mut states = Vec::new();
-        let start = dfa::reduce(&mut states, nfa.states(), nfa.start_id());
-        Ty { states, start }
+        let mut auto = Automaton::new();
+        let start = auto.reduce(&nfa, nfa.start());
+        Ty { auto, start }
+    }
+}
+
+impl AsRef<Automaton> for Ty {
+    fn as_ref(&self) -> &Automaton {
+        &self.auto
+    }
+}
+
+impl AsMut<Automaton> for Ty {
+    fn as_mut(&mut self) -> &mut Automaton {
+        &mut self.auto
     }
 }

@@ -5,32 +5,37 @@ mod tests;
 pub use self::tests::*;
 
 use ty::automaton::nfa::build;
-use ty::automaton::state::{State, StateId};
+use ty::automaton::state::StateId;
+use ty::automaton::Automaton;
 use ty::polar;
 use variance::AsPolarity;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Ty {
-    states: Vec<State>,
+    auto: Automaton,
     start: StateId,
 }
 
 impl Ty {
-    pub(in ty::automaton) fn start(&self) -> &State {
-        &self.states[self.start]
-    }
-
-    pub(in ty::automaton) fn start_id(&self) -> StateId {
+    pub(in ty::automaton) fn start(&self) -> StateId {
         self.start
     }
 
-    pub(in ty::automaton) fn states(&self) -> &[State] {
-        &self.states
-    }
-
     pub fn new<P: AsPolarity>(ty: polar::Ty<P>) -> Self {
-        let mut states = Vec::new();
-        let start = build(&mut states, ty);
-        Ty { states, start }
+        let mut auto = Automaton::new();
+        let start = build(&mut auto, ty);
+        Ty { auto, start }
+    }
+}
+
+impl AsRef<Automaton> for Ty {
+    fn as_ref(&self) -> &Automaton {
+        &self.auto
+    }
+}
+
+impl AsMut<Automaton> for Ty {
+    fn as_mut(&mut self) -> &mut Automaton {
+        &mut self.auto
     }
 }

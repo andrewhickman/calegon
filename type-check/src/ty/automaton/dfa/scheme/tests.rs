@@ -30,20 +30,33 @@ proptest!{
         let mut seen = HashSet::new();
         let q1 = scheme.env[q1];
         let q2 = scheme.env[q2];
-        let _ = scheme.subsume(&mut seen, q1, q2);
+        let _ = scheme.as_mut().subsume(&mut seen, q1, q2);
     }
 
     #[test]
     fn proptest_subsume_eq(mut scheme in arb_scheme()) {
-        let mut seen = HashSet::new();
         let qn = scheme.env[0];
-        assert!(scheme.subsume(&mut seen, qn, qn).is_ok());
+        assert!(scheme.as_mut().subsume(&mut Default::default(), qn, qn).is_ok());
     }
 
     #[test]
     fn proptest_admissible((mut scheme, q1, _) in arb_scheme_and_indices()) {
         let qp = scheme.expr;
         let qn = scheme.env[q1];
-        scheme.admissible(qn, qp);
+        scheme.as_mut().admissible(qn, qp);
+    }
+
+    #[test]
+    fn proptest_biunify(mut nfa in nfa::arb_scheme()) {
+        let mut dfa = Scheme::new(&nfa);
+        let nqp = nfa.expr();
+        let nqn = nfa.env()[0];
+        let dqp = dfa.expr();
+        let dqn = dfa.env()[0];
+
+        ::std::fs::write("nfa", format!("{:#?}", nfa));
+        ::std::fs::write("dfa", format!("{:#?}", dfa));
+
+        assert_eq!(dfa.as_mut().biunify(&mut Default::default(), dqp, dqn), nfa.as_mut().biunify(&mut Default::default(), nqp, nqn));
     }
 }
