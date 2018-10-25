@@ -1,4 +1,3 @@
-use std::string::ToString;
 use std::{error, fmt};
 
 use bytecount::count;
@@ -7,12 +6,6 @@ use memchr::memrchr;
 use parser::Token;
 
 pub(crate) type ParseError<'a> = ::lalrpop_util::ParseError<usize, Token<'a>, (usize, String)>;
-
-pub(crate) fn error<'a>(location: usize, message: impl ToString) -> ParseError<'a> {
-    ::lalrpop_util::ParseError::User {
-        error: (location, message.to_string()),
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Error {

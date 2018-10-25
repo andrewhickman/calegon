@@ -1,0 +1,11 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+xs 2657493104 1974721235 3515119551 920288368 # shrinks to read = Read { comps: [Symbol(0)] }
+xs 3575795043 1671547859 3124800621 2403879415 # shrinks to stmt = Read(Read { comps: [Symbol(0)] })
+xs 1435466072 1556834205 3939884457 1315693890 # shrinks to item = Comp(Comp { name: Symbol(0), ty: Never })
+xs 374877854 3080586876 1118805112 1493028456 # shrinks to e = Enum { fields: [(Symbol(0), Never)] }
+xs 3415793641 2454880331 1621388552 2750697809 # shrinks to file = File { items: [Comp(Comp { name: Symbol(0), ty: Never })] }

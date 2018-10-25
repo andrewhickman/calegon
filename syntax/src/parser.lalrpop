@@ -71,4 +71,21 @@ Punctuated<T, P>: Vec<T> = {
     }
 };
 
-Symbol: symbol::Symbol = @L r"[[:alpha:]_][[:alnum:]_]*" =>? symbol::Symbol::intern(<>);
+pub(crate) Symbol: symbol::Symbol = SymbolToken => symbol::Symbol::intern(<>);
+
+match { // Keywords
+    "sys",
+    "read",
+    "write",
+    "comp",
+    "type",
+    "never",
+    "unit",
+    "i32",
+    "struct",
+    "enum",
+} else { // Symbol
+    r"_?[:alpha:](?:_?[:word:])*" => SymbolToken,
+} else {
+    "{", "}", ";", ","
+}

@@ -71,6 +71,16 @@ pub struct Enum {
     pub fields: Vec<(Symbol, Ty)>,
 }
 
+impl FromStr for Symbol {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        parser::SymbolParser::new()
+            .parse(input)
+            .map_err(|err| Error::new(input, err))
+    }
+}
+
 impl FromStr for File {
     type Err = Error;
 

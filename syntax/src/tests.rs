@@ -58,4 +58,10 @@ proptest! {
     fn proptest_enum(e in arb_enum()) {
         test_roundtrip(e)
     }
+
+    #[test]
+    fn proptest_symbol(symbol in arb_symbol()) {
+        test_roundtrip(symbol)
+    }
+
 }

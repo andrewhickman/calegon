@@ -5,24 +5,13 @@ use std::hash::BuildHasherDefault;
 
 use seahash::SeaHasher;
 
-use error::{error, ParseError};
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Symbol(u32);
 
 impl Symbol {
     // Symbols should only be created on the main thread to ensure they are comparable.
-    pub(crate) fn intern(location: usize, string: &str) -> Result<Self, ParseError<'_>> {
-        if string.contains("__") {
-            Err(error(
-                location,
-                "symbols may not contains consecutive '_' characters",
-            ))
-        } else if string.ends_with('_') {
-            Err(error(location, "symbols may not end with '_'"))
-        } else {
-            Ok(Interner::with(|interner| interner.intern(string)))
-        }
+    pub fn intern(string: &str) -> Self {
+        Interner::with(|interner| interner.intern(string))
     }
 
     pub fn as_str(self) -> &'static str {
@@ -76,15 +65,28 @@ impl Interner {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use super::*;
 
     proptest! {
         #[test]
         fn roundtrip(string in "[[:alnum:]]+") {
-            let symbol = Symbol::intern(0, &string).unwrap();
+            let symbol = Symbol::intern(&string);
             prop_assert_eq!(symbol.as_str(), &string);
-            let symbol2 = Symbol::intern(0, &string).unwrap();
+            let symbol2 = Symbol::intern(&string);
             prop_assert_eq!(symbol, symbol2);
         }
+    }
+
+    #[test]
+    fn parse_symbol() {
+        assert!(Symbol::from_str("_").is_err());
+        assert!(Symbol::from_str("_a").is_ok());
+        assert!(Symbol::from_str("a").is_ok());
+        assert!(Symbol::from_str("a_").is_err());
+        assert!(Symbol::from_str("a__").is_err());
+        assert!(Symbol::from_str("a__a").is_err());
+        assert!(Symbol::from_str("a_a").is_err());
     }
 }

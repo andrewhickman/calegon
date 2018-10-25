@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use proptest::collection::vec;
 use proptest::prelude::*;
 use proptest::strategy::LazyJust;
@@ -6,20 +8,9 @@ use proptest::string::string_regex;
 use {ast, Symbol};
 
 pub fn arb_symbol() -> impl Strategy<Value = Symbol> {
-    string_regex("[[:alpha:]][[:alnum:]]{0,5}")
+    string_regex("_?[:alpha:](?:_?[:word:]){0,5}")
         .unwrap()
-        .prop_filter("symbol is a keyword", |string| {
-            string != "comp"
-                && string != "enum"
-                && string != "i32"
-                && string != "never"
-                && string != "read"
-                && string != "struct"
-                && string != "sys"
-                && string != "type"
-                && string != "unit"
-                && string != "write"
-        }).prop_map(|string| Symbol::intern(0, &string).unwrap())
+        .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
 }
 
 prop_compose! {
