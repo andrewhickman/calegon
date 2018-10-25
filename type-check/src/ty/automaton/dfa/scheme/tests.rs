@@ -21,7 +21,7 @@ fn arb_scheme_and_indices() -> impl Strategy<Value = (Scheme, StateId, StateId)>
     })
 }
 
-proptest!{
+proptest! {
     #[test]
     fn proptest_construct(_ in arb_scheme()) {}
 
@@ -54,9 +54,9 @@ proptest!{
         let dqp = dfa.expr();
         let dqn = dfa.env()[0];
 
-        ::std::fs::write("dfa", format!("{:#?}", dfa));
-        ::std::fs::write("nfa", format!("{:#?}", nfa));
-
-        assert_eq!(dfa.as_mut().biunify(&mut Default::default(), dqp, dqn), nfa.as_mut().biunify(&mut Default::default(), nqp, nqn));
+        assert_eq!(
+            dfa.as_mut().biunify(&mut Default::default(), dqp, dqn),
+            nfa.as_mut().biunify(&mut Default::default(), nqp, nqn)
+        );
     }
 }
