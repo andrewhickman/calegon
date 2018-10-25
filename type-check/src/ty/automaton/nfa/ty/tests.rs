@@ -5,13 +5,14 @@ use ty::automaton::state::constructor::Constructor;
 use ty::automaton::state::transition;
 use ty::polar;
 use ty::Var;
-use variance::Polarity;
+use variance::{Neg, Polarity, Pos};
 
-pub fn arb_ty() -> impl Strategy<Value = Ty> {
-    prop_oneof! {
-        polar::arb_ty_pos().prop_map(Ty::new),
-        polar::arb_ty_neg().prop_map(Ty::new),
-    }
+pub fn arb_ty_pos() -> impl Strategy<Value = Ty<Pos>> {
+    polar::arb_ty_pos().prop_map(Ty::new)
+}
+
+pub fn arb_ty_neg() -> impl Strategy<Value = Ty<Neg>> {
+    polar::arb_ty_neg().prop_map(Ty::new)
 }
 
 #[test]
@@ -63,5 +64,5 @@ fn test() {
 
 proptest!{
     #[test]
-    fn proptest_construct(_ in arb_ty()) {}
+    fn proptest_construct(_ in arb_ty_pos()) {}
 }

@@ -10,7 +10,7 @@ impl Automaton {
     pub fn populate_flow(&mut self) {
         let mut map: Vec<(Vec<StateId>, Vec<StateId>)> = Vec::new();
         for (id, state) in self.iter_mut().enumerate() {
-            for var in state.take_vars() {
+            for var in state.constructors().vars() {
                 if map.len() <= var.0 {
                     map.resize(var.0 + 1, (Vec::new(), Vec::new()));
                 }

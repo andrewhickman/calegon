@@ -7,19 +7,18 @@ use std::ops;
 use ty::automaton::state::constructor::{Constructor, ConstructorSet};
 use ty::automaton::state::flow::FlowSet;
 use ty::automaton::state::transition::TransitionSet;
-use ty::Var;
 use variance::Polarity;
 
 pub(in ty::automaton) type StateId = usize;
 
 pub(in ty::automaton) const REJECT: StateId = usize::max_value();
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
 pub(in ty::automaton) struct State {
     pol: Polarity,
-    pub(in ty::automaton) cons: ConstructorSet,
-    pub(in ty::automaton) trans: TransitionSet,
+    cons: ConstructorSet,
+    trans: TransitionSet,
     pub(in ty::automaton) flow: FlowSet,
 }
 
@@ -43,7 +42,7 @@ impl State {
         I: IntoIterator<Item = &'a Self>,
     {
         let mut states = states.into_iter();
-        let mut result = states.next().expect("cannot merge 0 states").clone();
+        let mut result = states.next().expect("cannot merge 0 states").to_dstate();
         for state in states {
             result.merge(state);
         }
@@ -62,10 +61,6 @@ impl State {
         self.trans.add(symbol, to)
     }
 
-    pub fn take_vars(&mut self) -> Vec<Var> {
-        self.cons.take_vars()
-    }
-
     pub fn merge(&mut self, other: &Self) {
         debug_assert_eq!(self.polarity(), other.polarity());
         self.trans.union(&other.trans);
@@ -79,10 +74,12 @@ impl State {
     pub fn transitions(&self) -> &TransitionSet {
         &self.trans
     }
-}
 
-impl Clone for State {
-    fn clone(&self) -> Self {
+    pub fn transitions_mut(&mut self) -> &mut TransitionSet {
+        &mut self.trans
+    }
+
+    pub fn to_dstate(&self) -> Self {
         State {
             pol: self.pol,
             cons: self.cons.clone(),

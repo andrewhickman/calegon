@@ -9,7 +9,7 @@ use variance::Polarity;
 
 impl Automaton {
     pub fn subsume(
-        &mut self,
+        &self,
         seen: &mut HashSet<(StateId, StateId)>,
         q1: StateId,
         q2: StateId,

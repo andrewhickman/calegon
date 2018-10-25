@@ -2,7 +2,6 @@
 
 use std::cmp::Ordering;
 use std::fmt;
-use std::mem::replace;
 
 use ty::{Fields, Var};
 use variance::Polarity;
@@ -62,8 +61,8 @@ impl ConstructorSet {
         }
     }
 
-    pub fn take_vars(&mut self) -> Vec<Var> {
-        replace(&mut self.vars, Vec::new())
+    pub fn vars(&self) -> &[Var] {
+        &self.vars
     }
 
     pub fn lub_le_glb(&self, other: &Self) -> bool {

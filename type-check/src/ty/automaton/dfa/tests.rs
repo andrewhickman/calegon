@@ -1,11 +1,10 @@
 use std::ops::Deref;
 
-use ty::automaton::nfa::arb_ty;
-use ty::automaton::Automaton;
+use ty::automaton::{nfa, Automaton};
 
 proptest! {
     #[test]
-    fn reduce(nfa in arb_ty()) {
+    fn reduce(nfa in nfa::arb_ty_pos()) {
         let mut dfa = Automaton::new();
         let start = dfa.reduce(&nfa, nfa.start());
 

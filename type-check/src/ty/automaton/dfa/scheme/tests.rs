@@ -54,8 +54,8 @@ proptest!{
         let dqp = dfa.expr();
         let dqn = dfa.env()[0];
 
-        ::std::fs::write("nfa", format!("{:#?}", nfa));
         ::std::fs::write("dfa", format!("{:#?}", dfa));
+        ::std::fs::write("nfa", format!("{:#?}", nfa));
 
         assert_eq!(dfa.as_mut().biunify(&mut Default::default(), dqp, dqn), nfa.as_mut().biunify(&mut Default::default(), nqp, nqn));
     }

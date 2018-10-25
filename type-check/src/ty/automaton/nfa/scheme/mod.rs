@@ -4,7 +4,7 @@ mod tests;
 #[cfg(test)]
 pub use self::tests::*;
 
-use ty::automaton::nfa::build::build;
+use ty::automaton::nfa::build;
 use ty::automaton::state::StateId;
 use ty::automaton::Automaton;
 use ty::polar;

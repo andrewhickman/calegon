@@ -13,7 +13,7 @@ impl Automaton {
 
         self.reserve(nfa_states.len());
 
-        let dfa_start = self.add(nfa_states[nfa_start].clone());
+        let dfa_start = self.add(nfa_states[nfa_start].to_dstate());
         let mut stack = vec![dfa_start];
         let mut cache = HashMap::new();
         cache.insert(vec![nfa_start], dfa_start);
@@ -21,7 +21,7 @@ impl Automaton {
         let mut children: Vec<StateId> = Vec::new();
         while let Some(id) = stack.pop() {
             let mut new_trans = TransitionSet::new();
-            for (symbol, group) in &replace(&mut self[id].trans, TransitionSet::new())
+            for (symbol, group) in &replace(self[id].transitions_mut(), TransitionSet::new())
                 .get()
                 .iter()
                 .group_by(|tr| tr.symbol)
@@ -40,7 +40,7 @@ impl Automaton {
 
                 new_trans.add(symbol, id);
             }
-            replace(&mut self[id].trans, new_trans);
+            replace(self[id].transitions_mut(), new_trans);
         }
         dfa_start
     }

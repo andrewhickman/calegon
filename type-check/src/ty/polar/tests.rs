@@ -76,7 +76,15 @@ pub fn var_neg(idx: usize) -> Ty<'static, Neg> {
     intern(TyKind::Var(Var(idx)))
 }
 
-trait Intern: AsPolarity + Default + Eq + Hash + 'static {
+pub fn negate_pos(ty: Ty<'static, Pos>) -> Ty<'static, Neg> {
+    negate(ty)
+}
+
+pub fn negate_neg(ty: Ty<'static, Neg>) -> Ty<'static, Pos> {
+    negate(ty)
+}
+
+trait Intern: AsPolarity + Eq + Hash + 'static {
     fn context() -> &'static Mutex<HashSet<&'static TyKind<'static, Self>>>;
 }
 
