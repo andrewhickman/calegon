@@ -8,13 +8,13 @@ use proptest::string::string_regex;
 use {ast, Symbol};
 
 pub fn arb_symbol() -> impl Strategy<Value = Symbol> {
-    string_regex("_?[:alpha:](?:_?[:word:]){0,5}")
+    string_regex("_?[[:alpha:]](?:_?[[:alnum:]]){0,5}")
         .unwrap()
         .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
 }
 
 prop_compose! {
-    [pub] fn arb_file()(items in vec(arb_item(), 0..64)) -> ast::File {
+    [pub] fn arb_file()(items in vec(arb_item(), 0..8)) -> ast::File {
         ast::File { items }
     }
 }
@@ -23,7 +23,7 @@ pub fn arb_item() -> BoxedStrategy<ast::Item> {
     prop_oneof![
         arb_comp().prop_map(ast::Item::Comp),
         arb_ty_def().prop_map(ast::Item::TyDef),
-    ].prop_recursive(3, 32, 30, |inner| {
+    ].prop_recursive(3, 16, 30, |inner| {
         arb_sys_impl(inner).prop_map(ast::Item::Sys)
     }).boxed()
 }

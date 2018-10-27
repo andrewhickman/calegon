@@ -13,6 +13,12 @@ pub struct Error {
     message: String,
 }
 
+pub(crate) fn error<'a>(location: usize, message: impl ToString) -> ParseError<'a> {
+    ::lalrpop_util::ParseError::User {
+        error: (location, message.to_string()),
+    }
+}
+
 impl Error {
     pub(crate) fn new(input: &str, err: ParseError) -> Self {
         use lalrpop_util::ParseError::*;

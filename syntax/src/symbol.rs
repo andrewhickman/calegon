@@ -87,6 +87,6 @@ mod tests {
         assert!(Symbol::from_str("a_").is_err());
         assert!(Symbol::from_str("a__").is_err());
         assert!(Symbol::from_str("a__a").is_err());
-        assert!(Symbol::from_str("a_a").is_err());
+        assert!(Symbol::from_str("a_a").is_ok());
     }
 }

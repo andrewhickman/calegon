@@ -3,6 +3,7 @@ use std::str::FromStr;
 use std::string::ToString;
 
 use proptest::prelude::*;
+use proptest::test_runner::Config;
 
 use arbitrary::*;
 
@@ -19,6 +20,8 @@ where
 }
 
 proptest! {
+    #![proptest_config(Config::with_cases(16))]
+
     #[test]
     fn proptest_file(file in arb_file()) {
         test_roundtrip(file)
@@ -33,6 +36,10 @@ proptest! {
     fn proptest_sys(sys in arb_sys()) {
         test_roundtrip(sys)
     }
+}
+
+proptest! {
+    #![proptest_config(Config::with_cases(32))]
 
     #[test]
     fn proptest_stmt(stmt in arb_stmt()) {

@@ -1,4 +1,5 @@
 use {ast, symbol};
+use error::error;
 
 grammar;
 
@@ -71,9 +72,13 @@ Punctuated<T, P>: Vec<T> = {
     }
 };
 
-pub(crate) Symbol: symbol::Symbol = SymbolToken => symbol::Symbol::intern(<>);
+pub(crate) Symbol: symbol::Symbol = {
+    OkSymbol => symbol::Symbol::intern(<>),
+    <@L> BadSymbol =>? Err(error(<>, "symbol may not contain consecutive or trailing '_' characters")),
+}
 
-match { // Keywords
+match { 
+    // Keywords
     "sys",
     "read",
     "write",
@@ -84,8 +89,15 @@ match { // Keywords
     "i32",
     "struct",
     "enum",
-} else { // Symbol
-    r"_?[:alpha:](?:_?[:word:])*" => SymbolToken,
+    // Punctuation
+    "{", 
+    "}", 
+    ";", 
+    ",",
+} else { 
+    // Valid symbol
+    r"_?[[:alpha:]](?:_?[[:alnum:]])*" => OkSymbol,
 } else {
-    "{", "}", ";", ","
+    // Invalid symbol
+    r"[_[:alpha:]][_[:word:]]*" => BadSymbol,
 }
