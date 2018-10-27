@@ -12,7 +12,10 @@ pub mod ast;
 
 mod error;
 mod symbol;
-lalrpop_mod!(parser);
+lalrpop_mod!(
+    #[allow(dead_code, unused_imports)]
+    parser
+);
 #[cfg(any(test, feature = "proptest"))]
 mod arbitrary;
 #[cfg(test)]

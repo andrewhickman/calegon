@@ -1,9 +1,8 @@
-mod fmt;
+mod display;
+#[cfg(test)]
+mod from_str;
 
-use std::str::FromStr;
-
-use symbol::Interner;
-use {parser, Error, Symbol};
+use Symbol;
 
 #[derive(Debug)]
 pub struct File {
@@ -70,124 +69,4 @@ pub struct Struct {
 #[derive(Debug)]
 pub struct Enum {
     pub fields: Vec<(Symbol, Ty)>,
-}
-
-impl FromStr for Symbol {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::SymbolParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for File {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::FileParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Item {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::ItemParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Sys {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::SysParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Stmt {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::StmtParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Read {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::ReadParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Write {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::WriteParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Comp {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::CompParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for TyDef {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::TyDefParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Ty {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::TyParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Struct {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::StructParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}
-
-impl FromStr for Enum {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        parser::EnumParser::new()
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
 }
