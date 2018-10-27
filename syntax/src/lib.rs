@@ -1,9 +1,9 @@
 extern crate bytecount;
-#[macro_use]
 extern crate lalrpop_util;
 #[cfg(any(test, feature = "proptest"))]
 #[macro_use]
 extern crate proptest;
+extern crate lazy_static;
 extern crate memchr;
 extern crate regex;
 extern crate seahash;
@@ -22,6 +22,9 @@ mod tests;
 pub use self::arbitrary::*;
 pub use self::error::{Error, Location};
 pub use self::symbol::Symbol;
+
+use lalrpop_util::lalrpop_mod;
+use symbol::Interner;
 
 pub struct Parser {
     inner: parser::FileParser,
@@ -42,7 +45,7 @@ impl Parser {
 
     pub fn parse(&self, input: &str) -> Result<ast::File, Error> {
         self.inner
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }

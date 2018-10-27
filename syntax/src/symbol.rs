@@ -1,21 +1,23 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::BuildHasherDefault;
+use std::sync::{RwLock, RwLockWriteGuard};
 
+use lazy_static::lazy_static;
 use seahash::SeaHasher;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Symbol(u32);
 
 impl Symbol {
-    // Symbols should only be created on the main thread to ensure they are comparable.
-    pub fn intern(string: &str) -> Self {
-        Interner::with(|interner| interner.intern(string))
+    #[cfg(test)]
+    pub(crate) fn intern(string: &str) -> Self {
+        INTERNER.write().unwrap().intern(string)
     }
 
     pub fn as_str(self) -> &'static str {
-        Interner::with(|interner| interner.as_str(self))
+        // Should never need to block outside of tests
+        INTERNER.read().unwrap().strings[self.0 as usize]
     }
 }
 
@@ -27,26 +29,26 @@ impl AsRef<str> for Symbol {
 
 impl fmt::Display for Symbol {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Interner::with(|interner| write!(f, "{}", interner.as_str(*self)))
+        self.as_str().fmt(f)
     }
 }
 
 #[derive(Debug, Default)]
-struct Interner {
+pub(crate) struct Interner {
     symbols: HashMap<&'static str, Symbol, BuildHasherDefault<SeaHasher>>,
     strings: Vec<&'static str>,
 }
 
-impl Interner {
-    fn with<T, F: FnOnce(&mut Self) -> T>(f: F) -> T {
-        thread_local! {
-            static INTERNER: RefCell<Interner> = RefCell::default();
-        }
+lazy_static! {
+    static ref INTERNER: RwLock<Interner> = RwLock::default();
+}
 
-        INTERNER.with(|interner| f(&mut *interner.borrow_mut()))
+impl Interner {
+    pub fn write<'a>() -> RwLockWriteGuard<'a, Self> {
+        INTERNER.write().unwrap()
     }
 
-    fn intern(&mut self, string: &str) -> Symbol {
+    pub fn intern(&mut self, string: &str) -> Symbol {
         if let Some(&symbol) = self.symbols.get(string) {
             return symbol;
         }
@@ -56,10 +58,6 @@ impl Interner {
         self.symbols.insert(string, symbol);
         self.strings.push(string);
         symbol
-    }
-
-    fn as_str(&self, symbol: Symbol) -> &'static str {
-        &self.strings[symbol.0 as usize]
     }
 }
 

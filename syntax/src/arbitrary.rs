@@ -1,16 +1,23 @@
-use std::str::FromStr;
-
+use lazy_static::lazy_static;
 use proptest::collection::vec;
 use proptest::prelude::*;
 use proptest::strategy::LazyJust;
 use proptest::string::string_regex;
 
+use parser::SymbolParser;
+use symbol::Interner;
 use {ast, Symbol};
 
 pub fn arb_symbol() -> impl Strategy<Value = Symbol> {
+    lazy_static! {
+        static ref PARSER: SymbolParser = SymbolParser::new();
+    }
+
     string_regex("_?[[:alpha:]](?:_?[[:alnum:]]){0,5}")
         .unwrap()
-        .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
+        .prop_filter_map("invalid symbol", |string| {
+            PARSER.parse(&mut Interner::write(), &string).ok()
+        })
 }
 
 prop_compose! {

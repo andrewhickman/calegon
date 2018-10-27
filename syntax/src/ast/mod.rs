@@ -2,6 +2,7 @@ mod fmt;
 
 use std::str::FromStr;
 
+use symbol::Interner;
 use {parser, Error, Symbol};
 
 #[derive(Debug)]
@@ -76,7 +77,7 @@ impl FromStr for Symbol {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::SymbolParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -86,7 +87,7 @@ impl FromStr for File {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::FileParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -96,7 +97,7 @@ impl FromStr for Item {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::ItemParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -106,7 +107,7 @@ impl FromStr for Sys {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::SysParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -116,7 +117,7 @@ impl FromStr for Stmt {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::StmtParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -126,7 +127,7 @@ impl FromStr for Read {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::ReadParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -136,7 +137,7 @@ impl FromStr for Write {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::WriteParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -146,7 +147,7 @@ impl FromStr for Comp {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::CompParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -156,7 +157,7 @@ impl FromStr for TyDef {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::TyDefParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -166,7 +167,7 @@ impl FromStr for Ty {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::TyParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -176,7 +177,7 @@ impl FromStr for Struct {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::StructParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
@@ -186,7 +187,7 @@ impl FromStr for Enum {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         parser::EnumParser::new()
-            .parse(input)
+            .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }
 }
