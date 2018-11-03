@@ -3,6 +3,9 @@ name = "calegon-syntax"
 version = "0.1.0"
 authors = ["Andrew Hickman <andrew.hickman1@sky.com>"]
 
+[features]
+arbitrary = ["proptest", "proptest-recurse"]
+
 [dependencies]
 lalrpop-util = "0.16.1"
 regex = "~1"
@@ -11,9 +14,11 @@ memchr = "~2"
 bytecount = "0.3.2"
 lazy_static = "~1"
 proptest = { version = "0.8.6", optional = true }
+proptest-recurse = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
 proptest = "0.8.7"
+proptest-recurse = "0.2.0"
 
 [build-dependencies]
 lalrpop = "0.16.1"

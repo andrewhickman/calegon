@@ -5,7 +5,6 @@ use ty::automaton::dfa::Ty;
 use ty::automaton::{nfa, Automaton};
 use ty::polar;
 use variance::{Neg, Pos};
-use Label;
 
 pub fn arb_ty_pos() -> impl Strategy<Value = Ty<Pos>> {
     nfa::arb_ty_pos().prop_map(|nfa| Ty::new(&nfa))

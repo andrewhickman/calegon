@@ -1,9 +1,13 @@
 use std::str::FromStr;
 
+use lazy_static::lazy_static;
 use proptest::collection::vec;
+use proptest::num::i32;
+use proptest::option;
 use proptest::prelude::*;
 use proptest::strategy::LazyJust;
 use proptest::string::string_regex;
+use proptest_recurse::{StrategyExt, StrategySet};
 
 use {ast, Symbol};
 
@@ -13,110 +17,185 @@ pub fn arb_symbol() -> impl Strategy<Value = Symbol> {
         .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
 }
 
-prop_compose! {
-    [pub] fn arb_file()(items in vec(arb_item(), 0..8)) -> ast::File {
-        ast::File { items }
-    }
+lazy_static! {
+    pub static ref ARB_FILE: SBoxedStrategy<ast::File> = arb_file(&mut StrategySet::default());
 }
 
-pub fn arb_item() -> BoxedStrategy<ast::Item> {
+fn arb_file(set: &mut StrategySet) -> SBoxedStrategy<ast::File> {
+    vec(set.get::<ast::Item, _>(arb_item), 0..8)
+        .prop_map(|items| ast::File { items })
+        .sboxed()
+}
+
+lazy_static! {
+    pub static ref ARB_ITEM: SBoxedStrategy<ast::Item> = arb_item(&mut StrategySet::default());
+}
+
+fn arb_item(set: &mut StrategySet) -> SBoxedStrategy<ast::Item> {
     prop_oneof![
-        arb_comp().prop_map(ast::Item::Comp),
-        arb_ty_def().prop_map(ast::Item::TyDef),
-    ].prop_recursive(3, 16, 30, |inner| {
-        arb_sys_impl(inner).prop_map(ast::Item::Sys)
-    }).boxed()
+        set.get::<ast::Comp, _>(arb_comp).prop_map(ast::Item::Comp),
+        set.get::<ast::TyDef, _>(arb_ty_def)
+            .prop_map(ast::Item::TyDef),
+    ].prop_mutually_recursive(3, 16, 30, set, |set| {
+        set.get::<ast::Sys, _>(arb_sys)
+            .prop_map(ast::Item::Sys)
+            .sboxed()
+    })
 }
 
-pub fn arb_sys() -> impl Strategy<Value = ast::Sys> {
-    arb_sys_impl(arb_item())
+lazy_static! {
+    pub static ref ARB_SYS: SBoxedStrategy<ast::Sys> = arb_sys(&mut StrategySet::default());
 }
 
-prop_compose! {
-    fn arb_sys_impl(
-        item: impl Strategy<Value = ast::Item>
-    )(
-        name in arb_symbol(),
-        stmts in vec(arb_stmt_impl(item), 0..30)
-    ) -> ast::Sys {
-        ast::Sys { name, stmts }
-    }
+fn arb_sys(set: &mut StrategySet) -> SBoxedStrategy<ast::Sys> {
+    (arb_symbol(), vec(set.get::<ast::Stmt, _>(arb_stmt), 0..30))
+        .prop_map(|(name, stmts)| ast::Sys { name, stmts })
+        .sboxed()
 }
 
-pub fn arb_stmt() -> impl Strategy<Value = ast::Stmt> {
-    arb_stmt_impl(arb_item())
+lazy_static! {
+    pub static ref ARB_STMT: SBoxedStrategy<ast::Stmt> = arb_stmt(&mut StrategySet::default());
 }
 
-fn arb_stmt_impl(item: impl Strategy<Value = ast::Item>) -> impl Strategy<Value = ast::Stmt> {
+fn arb_stmt(set: &mut StrategySet) -> SBoxedStrategy<ast::Stmt> {
     prop_oneof![
-        45 => arb_read().prop_map(ast::Stmt::Read),
-        45 => arb_write().prop_map(ast::Stmt::Write),
-        10 => item.prop_map(ast::Stmt::Item),
-    ]
+        15 => set.get::<ast::Read, _>(arb_read).prop_map(ast::Stmt::Read),
+        15 => set.get::<ast::Write, _>(arb_write).prop_map(ast::Stmt::Write),
+    ].prop_mutually_recursive(4, 32, 8, set, |set| {
+        prop_oneof![
+            30 => set.get::<ast::Expr, _>(arb_expr).prop_map(ast::Stmt::Expr),
+            30 => set.get::<ast::Binding, _>(arb_binding).prop_map(ast::Stmt::Binding),
+            10 => set.get::<ast::Item, _>(arb_item).prop_map(ast::Stmt::Item),
+        ].sboxed()
+    })
 }
 
-prop_compose! {
-    [pub] fn arb_read()(comps in vec(arb_symbol(), 0..8)) -> ast::Read {
-        ast::Read { comps }
-    }
+lazy_static! {
+    pub static ref ARB_READ: SBoxedStrategy<ast::Read> = arb_read(&mut StrategySet::default());
 }
 
-prop_compose! {
-    [pub] fn arb_write()(comps in vec(arb_symbol(), 0..8)) -> ast::Write {
-        ast::Write { comps }
-    }
+fn arb_read(_: &mut StrategySet) -> SBoxedStrategy<ast::Read> {
+    vec(arb_symbol(), 0..8)
+        .prop_map(|comps| ast::Read { comps })
+        .sboxed()
 }
 
-prop_compose! {
-    [pub] fn arb_comp()(name in arb_symbol(), ty in arb_ty()) -> ast::Comp {
-        ast::Comp { name, ty }
-    }
+lazy_static! {
+    pub static ref ARB_WRITE: SBoxedStrategy<ast::Write> = arb_write(&mut StrategySet::default());
 }
 
-prop_compose! {
-    [pub] fn arb_ty_def()(name in arb_symbol(), ty in arb_ty()) -> ast::TyDef {
-        ast::TyDef { name, ty }
-    }
+fn arb_write(_: &mut StrategySet) -> SBoxedStrategy<ast::Write> {
+    vec(arb_symbol(), 0..8)
+        .prop_map(|comps| ast::Write { comps })
+        .sboxed()
 }
 
-pub fn arb_ty() -> BoxedStrategy<ast::Ty> {
+lazy_static! {
+    pub static ref ARB_COMP: SBoxedStrategy<ast::Comp> = arb_comp(&mut StrategySet::default());
+}
+
+fn arb_comp(set: &mut StrategySet) -> SBoxedStrategy<ast::Comp> {
+    (arb_symbol(), set.get::<ast::Ty, _>(arb_ty))
+        .prop_map(|(name, ty)| ast::Comp { name, ty })
+        .sboxed()
+}
+
+lazy_static! {
+    pub static ref ARB_TY_DEF: SBoxedStrategy<ast::TyDef> = arb_ty_def(&mut StrategySet::default());
+}
+
+fn arb_ty_def(set: &mut StrategySet) -> SBoxedStrategy<ast::TyDef> {
+    (arb_symbol(), set.get::<ast::Ty, _>(arb_ty))
+        .prop_map(|(name, ty)| ast::TyDef { name, ty })
+        .sboxed()
+}
+
+lazy_static! {
+    pub static ref ARB_TY: SBoxedStrategy<ast::Ty> = arb_ty(&mut StrategySet::default());
+}
+
+fn arb_ty(set: &mut StrategySet) -> SBoxedStrategy<ast::Ty> {
     prop_oneof![
         LazyJust::new(|| ast::Ty::Never),
         LazyJust::new(|| ast::Ty::Unit),
         LazyJust::new(|| ast::Ty::I32),
         arb_symbol().prop_map(ast::Ty::TyDef),
-    ].prop_recursive(4, 16, 8, |inner| {
-        prop_oneof! {
-            arb_struct_impl(inner.clone()).prop_map(ast::Ty::Struct),
-            arb_enum_impl(inner.clone()).prop_map(ast::Ty::Enum),
-        }
-    }).boxed()
+    ].prop_mutually_recursive(4, 16, 8, set, |set| {
+        prop_oneof![
+            set.get::<ast::Struct, _>(arb_struct)
+                .prop_map(ast::Ty::Struct),
+            set.get::<ast::Enum, _>(arb_enum).prop_map(ast::Ty::Enum),
+        ].sboxed()
+    })
 }
 
-pub fn arb_struct() -> impl Strategy<Value = ast::Struct> {
-    arb_struct_impl(arb_ty())
+lazy_static! {
+    pub static ref ARB_STRUCT: SBoxedStrategy<ast::Struct> =
+        arb_struct(&mut StrategySet::default());
 }
 
-prop_compose! {
-    fn arb_struct_impl(
-        ty: impl Strategy<Value = ast::Ty>
-    )(
-        fields in vec((arb_symbol(), ty), 0..8)
-    ) -> ast::Struct {
-        ast::Struct { fields }
-    }
+fn arb_struct(set: &mut StrategySet) -> SBoxedStrategy<ast::Struct> {
+    vec((arb_symbol(), set.get::<ast::Ty, _>(arb_ty)), 0..8)
+        .prop_map(|fields| ast::Struct { fields })
+        .sboxed()
 }
 
-pub fn arb_enum() -> impl Strategy<Value = ast::Enum> {
-    arb_enum_impl(arb_ty())
+lazy_static! {
+    pub static ref ARB_ENUM: SBoxedStrategy<ast::Enum> = arb_enum(&mut StrategySet::default());
 }
 
-prop_compose! {
-    fn arb_enum_impl(
-        ty: impl Strategy<Value = ast::Ty>
-    )(
-        fields in vec((arb_symbol(), ty), 0..8)
-    ) -> ast::Enum {
-        ast::Enum { fields }
-    }
+fn arb_enum(set: &mut StrategySet) -> SBoxedStrategy<ast::Enum> {
+    vec((arb_symbol(), set.get::<ast::Ty, _>(arb_ty)), 0..8)
+        .prop_map(|fields| ast::Enum { fields })
+        .sboxed()
+}
+
+lazy_static! {
+    pub static ref ARB_BINDING: SBoxedStrategy<ast::Binding> =
+        arb_binding(&mut StrategySet::default());
+}
+
+fn arb_binding(set: &mut StrategySet) -> SBoxedStrategy<ast::Binding> {
+    (
+        arb_symbol(),
+        option::of(set.get::<ast::Ty, _>(arb_ty)),
+        option::of(set.get::<ast::Term, _>(arb_term)),
+    )
+        .prop_map(|(name, ty, val)| ast::Binding { name, ty, val })
+        .sboxed()
+}
+
+lazy_static! {
+    pub static ref ARB_EXPR: SBoxedStrategy<ast::Expr> = arb_expr(&mut StrategySet::default());
+}
+
+fn arb_expr(set: &mut StrategySet) -> SBoxedStrategy<ast::Expr> {
+    let term = set.get::<ast::Term, _>(arb_term);
+    prop_oneof![
+        (term.clone(), term.clone()).prop_map(|(f, a)| ast::Expr::FnCall(f, a)),
+        (
+            vec(set.get::<ast::Stmt, _>(arb_stmt), 0..8),
+            option::of(term)
+        )
+            .prop_map(|(stmts, tail)| ast::Expr::Scope(stmts, tail))
+    ].sboxed()
+}
+
+lazy_static! {
+    pub static ref ARB_TERM: SBoxedStrategy<ast::Term> = arb_term(&mut StrategySet::default());
+}
+
+fn arb_term(set: &mut StrategySet) -> SBoxedStrategy<ast::Term> {
+    prop_oneof![
+        i32::ANY.prop_map(ast::Term::Literal),
+        arb_symbol().prop_map(ast::Term::Var),
+    ].prop_mutually_recursive(4, 16, 8, set, |set| {
+        let term = set.get::<ast::Term, _>(arb_term);
+        prop_oneof![
+            vec((arb_symbol(), term.clone()), 0..8).prop_map(ast::Term::Struct),
+            set.get::<ast::Expr, _>(arb_expr)
+                .prop_map(|expr| ast::Term::Expr(Box::new(expr))),
+            (term, arb_symbol()).prop_map(|(expr, name)| ast::Term::Dot(Box::new(expr), name)),
+        ].sboxed()
+    })
 }

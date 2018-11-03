@@ -1,10 +1,12 @@
 extern crate bytecount;
 extern crate lalrpop_util;
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(any(test, feature = "arbitrary"))]
 #[macro_use]
 extern crate proptest;
 extern crate lazy_static;
 extern crate memchr;
+#[cfg(any(test, feature = "arbitrary"))]
+extern crate proptest_recurse;
 extern crate regex;
 extern crate seahash;
 
@@ -16,12 +18,12 @@ lalrpop_mod!(
     #[allow(dead_code, unused_imports)]
     parser
 );
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(any(test, feature = "arbitrary"))]
 mod arbitrary;
 #[cfg(test)]
 mod tests;
 
-#[cfg(any(test, feature = "proptest"))]
+#[cfg(any(test, feature = "arbitrary"))]
 pub use self::arbitrary::*;
 pub use self::error::{Error, Location};
 pub use self::symbol::Symbol;

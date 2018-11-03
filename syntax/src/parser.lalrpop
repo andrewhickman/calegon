@@ -1,4 +1,6 @@
 use std::sync::RwLockWriteGuard;
+use std::str::{FromStr};
+use std::string::ToString;
 
 use {ast, symbol};
 use error::error;
@@ -27,6 +29,8 @@ pub(crate) Stmt: ast::Stmt = {
     Item => ast::Stmt::Item(<>),
     Read => ast::Stmt::Read(<>),
     Write => ast::Stmt::Write(<>),
+    Expr => ast::Stmt::Expr(<>),
+    Binding => ast::Stmt::Binding(<>),
 };
 
 pub(crate) Read: ast::Read = {
@@ -55,11 +59,42 @@ pub(crate) Ty: ast::Ty = {
 };
 
 pub(crate) Struct: ast::Struct = {
-    "struct" "{" <fields:Punctuated<(<Symbol> <Ty>), ";">> "}" => ast::Struct { <> }
+    "struct" "{" <fields:Punctuated<(<Symbol> ":" <Ty>), ",">> "}" => ast::Struct { <> }
 };
 
 pub(crate) Enum: ast::Enum = {
-    "enum" "{" <fields:Punctuated<(<Symbol> <Ty>), ";">> "}" => ast::Enum { <> }
+    "enum" "{" <fields:Punctuated<(<Symbol> ":" <Ty>), ",">> "}" => ast::Enum { <> }
+};
+
+pub(crate) Binding: ast::Binding = {
+    "let" <name:Symbol> <ty:(":" <Ty>)?> <val:("=" <Term>)?> => ast::Binding { <> }
+};
+
+pub(crate) Expr: ast::Expr = {
+    DotTerm Term => ast::Expr::FnCall(<>),
+    ScopeExpr,
+}
+
+ScopeExpr: ast::Expr = {
+    "{" <(<Stmt> ";")*> <Term?> "}" => ast::Expr::Scope(<>),
+}
+
+pub(crate) Term: ast::Term = {
+    <DotTerm> <Term> => ast::Term::Expr(Box::new(ast::Expr::FnCall(<>))),
+    DotTerm,
+}
+
+DotTerm: ast::Term = {
+    <term:DotTerm> "." <name:Symbol> => ast::Term::Dot(Box::new(term), name),
+    <l:@L> <i:Int> =>? i32::from_str(i).map(ast::Term::Literal).map_err(|err| error(l, err)),
+    "{" <PunctuatedNonEmpty<(<Symbol> ":" <Term>), ",">> "}" => ast::Term::Struct(<>),
+    ScopeExpr => ast::Term::Expr(Box::new(<>)),
+    Symbol => ast::Term::Var(<>),
+}
+
+pub(crate) Symbol: symbol::Symbol = {
+    OkSymbol => interner.intern(<>),
+    <@L> BadSymbol =>? Err(error(<>, "symbol may not contain consecutive or trailing '_' characters")),
 };
 
 // Common macros
@@ -74,10 +109,14 @@ Punctuated<T, P>: Vec<T> = {
     }
 };
 
-pub(crate) Symbol: symbol::Symbol = {
-    OkSymbol => interner.intern(<>),
-    <@L> BadSymbol =>? Err(error(<>, "symbol may not contain consecutive or trailing '_' characters")),
-}
+// Common macros
+PunctuatedNonEmpty<T, P>: Vec<T> = {
+    <e:T> <values:(P <T>)*> P? => {
+        let mut values = values;
+        values.insert(0, e);
+        values
+    }
+};
 
 match { 
     // Keywords
@@ -91,15 +130,22 @@ match {
     "i32",
     "struct",
     "enum",
+    "let",
     // Punctuation
-    "{", 
-    "}", 
     ";", 
     ",",
+    "=",
+    ":",
+    ".",
+    r"[{(\[]" => "{", 
+    r"[})\]]" => "}", 
 } else { 
     // Valid symbol
     r"_?[[:alpha:]](?:_?[[:alnum:]])*" => OkSymbol,
 } else {
     // Invalid symbol
     r"[_[:alpha:]][_[:word:]]*" => BadSymbol,
+} else {
+    // Integer literal
+    r"[+-]?[[:digit:]]+" => Int,
 }

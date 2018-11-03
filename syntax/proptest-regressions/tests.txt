@@ -9,3 +9,5 @@ xs 3575795043 1671547859 3124800621 2403879415 # shrinks to stmt = Read(Read { c
 xs 1435466072 1556834205 3939884457 1315693890 # shrinks to item = Comp(Comp { name: Symbol(0), ty: Never })
 xs 374877854 3080586876 1118805112 1493028456 # shrinks to e = Enum { fields: [(Symbol(0), Never)] }
 xs 3415793641 2454880331 1621388552 2750697809 # shrinks to file = File { items: [Comp(Comp { name: Symbol(0), ty: Never })] }
+xs 425232055 286846954 2161310448 3945691963 # shrinks to e = Binding { name: Symbol(201), ty: None, val: Some(Struct([(Symbol(201), Literal(0))])) }
+xs 2978044528 3111301002 1405118768 35099999 # shrinks to stmt = Expr(FnCall(Literal(0), Struct([(Symbol(85), Literal(0))])))

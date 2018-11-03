@@ -174,3 +174,45 @@ impl FromStr for Enum {
             .map_err(|err| Error::new(input, err))
     }
 }
+
+impl FromStr for Binding {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        lazy_static! {
+            static ref PARSER: BindingParser = BindingParser::new();
+        }
+
+        PARSER
+            .parse(&mut Interner::write(), input)
+            .map_err(|err| Error::new(input, err))
+    }
+}
+
+impl FromStr for Expr {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        lazy_static! {
+            static ref PARSER: ExprParser = ExprParser::new();
+        }
+
+        PARSER
+            .parse(&mut Interner::write(), input)
+            .map_err(|err| Error::new(input, err))
+    }
+}
+
+impl FromStr for Term {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        lazy_static! {
+            static ref PARSER: TermParser = TermParser::new();
+        }
+
+        PARSER
+            .parse(&mut Interner::write(), input)
+            .map_err(|err| Error::new(input, err))
+    }
+}

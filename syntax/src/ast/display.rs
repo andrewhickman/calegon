@@ -67,6 +67,8 @@ impl fmt::Display for ast::Stmt {
             ast::Stmt::Item(item) => item.fmt(f),
             ast::Stmt::Read(read) => read.fmt(f),
             ast::Stmt::Write(write) => write.fmt(f),
+            ast::Stmt::Expr(expr) => expr.fmt(f),
+            ast::Stmt::Binding(binding) => binding.fmt(f),
         }
     }
 }
@@ -128,7 +130,7 @@ impl fmt::Display for ast::Struct {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "struct {{")?;
         for &(ref name, ref ty) in &self.fields {
-            writeln!(Indented(&mut *f, true), "{} {};", name, ty)?;
+            writeln!(Indented(&mut *f, true), "{}: {},", name, ty)?;
         }
         write!(f, "}}")
     }
@@ -138,8 +140,57 @@ impl fmt::Display for ast::Enum {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "enum {{")?;
         for &(ref name, ref ty) in &self.fields {
-            writeln!(Indented(&mut *f, true), "{} {};", name, ty)?;
+            writeln!(Indented(&mut *f, true), "{}: {},", name, ty)?;
         }
         write!(f, "}}")
+    }
+}
+
+impl fmt::Display for ast::Binding {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "let {}", self.name)?;
+        if let Some(ref ty) = self.ty {
+            write!(f, ": {}", ty)?
+        }
+        if let Some(ref val) = self.val {
+            write!(f, " = {}", val)?
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for ast::Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ast::Expr::FnCall(func, arg) => write!(f, "{} {}", func, arg),
+            ast::Expr::Scope(stmts, tail) => {
+                writeln!(f, "{{")?;
+                for stmt in stmts {
+                    writeln!(Indented(&mut *f, true), "{};", stmt)?;
+                }
+                if let Some(tail) = tail {
+                    writeln!(Indented(&mut *f, true), "{}", tail)?;
+                }
+                write!(f, "}}")
+            }
+        }
+    }
+}
+
+impl fmt::Display for ast::Term {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ast::Term::Literal(lit) => lit.fmt(f),
+            ast::Term::Var(name) => name.fmt(f),
+            ast::Term::Dot(expr, name) => write!(f, "{}.{}", expr, name),
+            ast::Term::Struct(fields) => {
+                writeln!(f, "{{")?;
+                for &(ref name, ref ty) in fields {
+                    writeln!(Indented(&mut *f, true), "{}: {},", name, ty)?;
+                }
+                write!(f, "}}")
+            }
+            ast::Term::Expr(expr) => expr.fmt(f),
+        }
     }
 }

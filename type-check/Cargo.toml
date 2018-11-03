@@ -9,15 +9,15 @@ typed-arena = "~1.4"
 hash_hasher = "~1"
 iter-set = "0.2.0"
 itertools = "0.7.8"
-im = "12.2.0"
+im = "~12"
 
 [dependencies.calegon-syntax]
 path = "../syntax"
 
 [dev-dependencies]
-proptest = "0.8.6"
+proptest = "0.8.7"
 lazy_static = "~1"
 
 [dev-dependencies.calegon-syntax]
 path = "../syntax"
-features = ["proptest"]
+features = ["arbitrary"]

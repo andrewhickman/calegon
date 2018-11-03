@@ -1,5 +1,5 @@
 mod display;
-#[cfg(test)]
+#[cfg(any(test, feature = "arbitrary"))]
 mod from_str;
 
 use Symbol;
@@ -27,6 +27,8 @@ pub enum Stmt {
     Item(Item),
     Read(Read),
     Write(Write),
+    Expr(Expr),
+    Binding(Binding),
 }
 
 #[derive(Debug)]
@@ -69,4 +71,26 @@ pub struct Struct {
 #[derive(Debug)]
 pub struct Enum {
     pub fields: Vec<(Symbol, Ty)>,
+}
+
+#[derive(Debug)]
+pub struct Binding {
+    pub name: Symbol,
+    pub ty: Option<Ty>,
+    pub val: Option<Term>,
+}
+
+#[derive(Debug)]
+pub enum Expr {
+    FnCall(Term, Term),
+    Scope(Vec<Stmt>, Option<Term>),
+}
+
+#[derive(Debug)]
+pub enum Term {
+    Literal(i32),
+    Var(Symbol),
+    Struct(Vec<(Symbol, Term)>),
+    Expr(Box<Expr>),
+    Dot(Box<Term>, Symbol),
 }

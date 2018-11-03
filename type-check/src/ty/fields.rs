@@ -20,11 +20,10 @@ impl<T> Default for Fields<T> {
 }
 
 impl<T> Fields<T> {
-    pub fn new(mut fields: Vec<(Label, T)>) -> Self {
-        fields.sort_by_key(key);
-        Fields {
-            inner: fields.into(),
-        }
+    pub fn new(fields: impl Into<Arc<[(Label, T)]>>) -> Self {
+        let mut inner = fields.into();
+        Arc::get_mut(&mut inner).unwrap().sort_by_key(key);
+        Fields { inner }
     }
 
     pub fn get(&self) -> &[(Label, T)] {
