@@ -75,11 +75,6 @@ proptest! {
     }
 
     #[test]
-    fn proptest_term(e in &*ARB_TERM) {
-        test_roundtrip(e)
-    }
-
-    #[test]
     fn proptest_symbol(symbol in arb_symbol()) {
         test_roundtrip(symbol)
     }

@@ -162,6 +162,16 @@ impl fmt::Display for ast::Binding {
 impl fmt::Display for ast::Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            ast::Expr::Literal(lit) => lit.fmt(f),
+            ast::Expr::Var(name) => name.fmt(f),
+            ast::Expr::Dot(expr, name) => write!(f, "{}.{}", expr, name),
+            ast::Expr::Struct(fields) => {
+                writeln!(f, "{{")?;
+                for &(ref name, ref ty) in fields {
+                    writeln!(Indented(&mut *f, true), "{}: {},", name, ty)?;
+                }
+                write!(f, "}}")
+            }
             ast::Expr::FnCall(func, arg) => write!(f, "{} {}", func, arg),
             ast::Expr::Scope(stmts, tail) => {
                 writeln!(f, "{{")?;
@@ -173,24 +183,6 @@ impl fmt::Display for ast::Expr {
                 }
                 write!(f, "}}")
             }
-        }
-    }
-}
-
-impl fmt::Display for ast::Term {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ast::Term::Literal(lit) => lit.fmt(f),
-            ast::Term::Var(name) => name.fmt(f),
-            ast::Term::Dot(expr, name) => write!(f, "{}.{}", expr, name),
-            ast::Term::Struct(fields) => {
-                writeln!(f, "{{")?;
-                for &(ref name, ref ty) in fields {
-                    writeln!(Indented(&mut *f, true), "{}: {},", name, ty)?;
-                }
-                write!(f, "}}")
-            }
-            ast::Term::Expr(expr) => expr.fmt(f),
         }
     }
 }

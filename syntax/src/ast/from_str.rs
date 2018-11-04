@@ -202,17 +202,3 @@ impl FromStr for Expr {
             .map_err(|err| Error::new(input, err))
     }
 }
-
-impl FromStr for Term {
-    type Err = Error;
-
-    fn from_str(input: &str) -> Result<Self, Self::Err> {
-        lazy_static! {
-            static ref PARSER: TermParser = TermParser::new();
-        }
-
-        PARSER
-            .parse(&mut Interner::write(), input)
-            .map_err(|err| Error::new(input, err))
-    }
-}

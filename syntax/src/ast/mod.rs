@@ -77,20 +77,16 @@ pub struct Enum {
 pub struct Binding {
     pub name: Symbol,
     pub ty: Option<Ty>,
-    pub val: Option<Term>,
+    pub val: Option<Expr>,
 }
 
 #[derive(Debug)]
 pub enum Expr {
-    FnCall(Term, Term),
-    Scope(Vec<Stmt>, Option<Term>),
-}
-
-#[derive(Debug)]
-pub enum Term {
     Literal(i32),
     Var(Symbol),
-    Struct(Vec<(Symbol, Term)>),
-    Expr(Box<Expr>),
-    Dot(Box<Term>, Symbol),
+    Struct(Vec<(Symbol, Expr)>),
+    Dot(Box<Expr>, Symbol),
+
+    FnCall(Box<Expr>, Box<Expr>),
+    Scope(Vec<Stmt>, Option<Box<Expr>>),
 }

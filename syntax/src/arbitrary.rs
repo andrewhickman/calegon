@@ -159,7 +159,7 @@ fn arb_binding(set: &mut StrategySet) -> SBoxedStrategy<ast::Binding> {
     (
         arb_symbol(),
         option::of(set.get::<ast::Ty, _>(arb_ty)),
-        option::of(set.get::<ast::Term, _>(arb_term)),
+        option::of(set.get::<ast::Expr, _>(arb_expr)),
     )
         .prop_map(|(name, ty, val)| ast::Binding { name, ty, val })
         .sboxed()
@@ -170,32 +170,21 @@ lazy_static! {
 }
 
 fn arb_expr(set: &mut StrategySet) -> SBoxedStrategy<ast::Expr> {
-    let term = set.get::<ast::Term, _>(arb_term);
     prop_oneof![
-        (term.clone(), term.clone()).prop_map(|(f, a)| ast::Expr::FnCall(f, a)),
-        (
-            vec(set.get::<ast::Stmt, _>(arb_stmt), 0..8),
-            option::of(term)
-        )
-            .prop_map(|(stmts, tail)| ast::Expr::Scope(stmts, tail))
-    ].sboxed()
-}
-
-lazy_static! {
-    pub static ref ARB_TERM: SBoxedStrategy<ast::Term> = arb_term(&mut StrategySet::default());
-}
-
-fn arb_term(set: &mut StrategySet) -> SBoxedStrategy<ast::Term> {
-    prop_oneof![
-        i32::ANY.prop_map(ast::Term::Literal),
-        arb_symbol().prop_map(ast::Term::Var),
+        i32::ANY.prop_map(ast::Expr::Literal),
+        arb_symbol().prop_map(ast::Expr::Var),
     ].prop_mutually_recursive(4, 16, 8, set, |set| {
-        let term = set.get::<ast::Term, _>(arb_term);
+        let expr = set.get::<ast::Expr, _>(arb_expr);
         prop_oneof![
-            vec((arb_symbol(), term.clone()), 0..8).prop_map(ast::Term::Struct),
-            set.get::<ast::Expr, _>(arb_expr)
-                .prop_map(|expr| ast::Term::Expr(Box::new(expr))),
-            (term, arb_symbol()).prop_map(|(expr, name)| ast::Term::Dot(Box::new(expr), name)),
+            vec((arb_symbol(), expr.clone()), 0..8).prop_map(ast::Expr::Struct),
+            (expr.clone(), expr.clone())
+                .prop_map(|(f, a)| ast::Expr::FnCall(Box::new(f), Box::new(a))),
+            (
+                vec(set.get::<ast::Stmt, _>(arb_stmt), 0..8),
+                option::of(expr.clone())
+            )
+                .prop_map(|(stmts, tail)| ast::Expr::Scope(stmts, tail.map(Box::new))),
+            (expr, arb_symbol()).prop_map(|(expr, name)| ast::Expr::Dot(Box::new(expr), name)),
         ].sboxed()
     })
 }

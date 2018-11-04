@@ -67,29 +67,20 @@ pub(crate) Enum: ast::Enum = {
 };
 
 pub(crate) Binding: ast::Binding = {
-    "let" <name:Symbol> <ty:(":" <Ty>)?> <val:("=" <Term>)?> => ast::Binding { <> }
+    "let" <name:Symbol> <ty:(":" <Ty>)?> <val:("=" <Expr>)?> => ast::Binding { <> }
 };
 
 pub(crate) Expr: ast::Expr = {
-    DotTerm Term => ast::Expr::FnCall(<>),
-    ScopeExpr,
+    <f:DotExpr> <a:Expr> => ast::Expr::FnCall(Box::new(f), Box::new(a)),
+    DotExpr,
 }
 
-ScopeExpr: ast::Expr = {
-    "{" <(<Stmt> ";")*> <Term?> "}" => ast::Expr::Scope(<>),
-}
-
-pub(crate) Term: ast::Term = {
-    <DotTerm> <Term> => ast::Term::Expr(Box::new(ast::Expr::FnCall(<>))),
-    DotTerm,
-}
-
-DotTerm: ast::Term = {
-    <term:DotTerm> "." <name:Symbol> => ast::Term::Dot(Box::new(term), name),
-    <l:@L> <i:Int> =>? i32::from_str(i).map(ast::Term::Literal).map_err(|err| error(l, err)),
-    "{" <PunctuatedNonEmpty<(<Symbol> ":" <Term>), ",">> "}" => ast::Term::Struct(<>),
-    ScopeExpr => ast::Term::Expr(Box::new(<>)),
-    Symbol => ast::Term::Var(<>),
+DotExpr: ast::Expr = {
+    <term:DotExpr> "." <name:Symbol> => ast::Expr::Dot(Box::new(term), name),
+    <l:@L> <i:Int> =>? i32::from_str(i).map(ast::Expr::Literal).map_err(|err| error(l, err)),
+    "{" <PunctuatedNonEmpty<(<Symbol> ":" <Expr>), ",">> "}" => ast::Expr::Struct(<>),
+    "{" <stmts:(<Stmt> ";")*> <tail:Expr?> "}" => ast::Expr::Scope(stmts, tail.map(Box::new)),
+    Symbol => ast::Expr::Var(<>),
 }
 
 pub(crate) Symbol: symbol::Symbol = {
