@@ -6,14 +6,12 @@ use proptest::num::i32;
 use proptest::option;
 use proptest::prelude::*;
 use proptest::strategy::LazyJust;
-use proptest::string::string_regex;
 use proptest_recurse::{StrategyExt, StrategySet};
 
 use {ast, Symbol};
 
 pub fn arb_symbol() -> impl Strategy<Value = Symbol> {
-    string_regex("_?[[:alpha:]](?:_?[[:alnum:]]){0,5}")
-        .unwrap()
+    "_?[[:alpha:]](?:_?[[:alnum:]]){0,5}"
         .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
 }
 
