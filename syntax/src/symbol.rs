@@ -1,20 +1,22 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::BuildHasherDefault;
+use std::str::FromStr;
 use std::sync::{RwLock, RwLockWriteGuard};
 
+use int_hash::IntHashMap;
 use lazy_static::lazy_static;
 use seahash::SeaHasher;
+
+use parser::SymbolParser;
+use Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Symbol(u32);
 
-impl Symbol {
-    #[cfg(test)]
-    pub(crate) fn intern(string: &str) -> Self {
-        INTERNER.write().unwrap().intern(string)
-    }
+pub type SymbolMap<V> = IntHashMap<Symbol, V>;
 
+impl Symbol {
     pub fn as_str(self) -> &'static str {
         // Should never need to block outside of tests
         INTERNER.read().unwrap().strings[self.0 as usize]
@@ -33,7 +35,21 @@ impl fmt::Display for Symbol {
     }
 }
 
-#[derive(Debug, Default)]
+impl FromStr for Symbol {
+    type Err = Error;
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        lazy_static! {
+            static ref PARSER: SymbolParser = SymbolParser::new();
+        }
+
+        PARSER
+            .parse(&mut Interner::write(), input)
+            .map_err(|err| Error::new(input, err))
+    }
+}
+
+#[derive(Default)]
 pub(crate) struct Interner {
     symbols: HashMap<&'static str, Symbol, BuildHasherDefault<SeaHasher>>,
     strings: Vec<&'static str>,
@@ -69,10 +85,10 @@ mod tests {
 
     proptest! {
         #[test]
-        fn roundtrip(string in "[[:alnum:]]+") {
-            let symbol = Symbol::intern(&string);
+        fn roundtrip(string in "[[:alpha:]]+") {
+            let symbol = Symbol::from_str(&string).unwrap();
             prop_assert_eq!(symbol.as_str(), &string);
-            let symbol2 = Symbol::intern(&string);
+            let symbol2 = Symbol::from_str(&string).unwrap();
             prop_assert_eq!(symbol, symbol2);
         }
     }

@@ -1,10 +1,12 @@
 extern crate bytecount;
+#[macro_use]
 extern crate lalrpop_util;
+extern crate int_hash;
+extern crate lazy_static;
+extern crate memchr;
 #[cfg(any(test, feature = "arbitrary"))]
 #[macro_use]
 extern crate proptest;
-extern crate lazy_static;
-extern crate memchr;
 #[cfg(any(test, feature = "arbitrary"))]
 extern crate proptest_recurse;
 extern crate regex;
@@ -12,44 +14,33 @@ extern crate seahash;
 
 pub mod ast;
 
+#[cfg(any(test, feature = "arbitrary"))]
+pub mod arbitrary;
+
 mod error;
 mod symbol;
-lalrpop_mod!(
-    #[allow(dead_code, unused_imports)]
-    parser
-);
-#[cfg(any(test, feature = "arbitrary"))]
-mod arbitrary;
+lalrpop_mod!(parser);
 #[cfg(test)]
 mod tests;
 
-#[cfg(any(test, feature = "arbitrary"))]
-pub use self::arbitrary::*;
 pub use self::error::{Error, Location};
-pub use self::symbol::Symbol;
+pub use self::symbol::{Symbol, SymbolMap};
 
-use lalrpop_util::lalrpop_mod;
-use symbol::Interner;
+use std::str::FromStr;
 
-pub struct Parser {
-    inner: parser::FileParser,
-}
+impl FromStr for ast::File {
+    type Err = Error;
 
-impl Default for Parser {
-    fn default() -> Self {
-        Parser {
-            inner: parser::FileParser::new(),
+    fn from_str(input: &str) -> Result<ast::File, Self::Err> {
+        use lazy_static::lazy_static;
+        use parser::FileParser;
+        use symbol::Interner;
+
+        lazy_static! {
+            static ref PARSER: FileParser = FileParser::new();
         }
-    }
-}
 
-impl Parser {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
-    pub fn parse(&self, input: &str) -> Result<ast::File, Error> {
-        self.inner
+        PARSER
             .parse(&mut Interner::write(), input)
             .map_err(|err| Error::new(input, err))
     }

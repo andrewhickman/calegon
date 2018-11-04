@@ -1,92 +1,100 @@
-mod display;
-#[cfg(any(test, feature = "arbitrary"))]
-mod from_str;
+pub mod bind;
+pub mod expr;
+pub mod file;
+pub mod stmt;
+pub mod ty;
 
-use Symbol;
+pub use self::bind::Bind;
+pub use self::expr::Expr;
+pub use self::file::File;
+pub use self::stmt::Stmt;
+pub use self::ty::Ty;
+
+use std::fmt::{self, Write};
+
+use SymbolMap;
 
 #[derive(Debug)]
-pub struct File {
-    pub items: Vec<Item>,
+pub struct Scope<B, T> {
+    pub body: Vec<B>,
+    pub tail: Option<T>,
 }
 
 #[derive(Debug)]
-pub enum Item {
-    Sys(Sys),
-    Comp(Comp),
-    TyDef(TyDef),
-}
+pub struct Tuple<T>(pub Vec<T>);
 
 #[derive(Debug)]
-pub struct Sys {
-    pub name: Symbol,
-    pub stmts: Vec<Stmt>,
+pub struct Map<T>(pub SymbolMap<T>);
+
+struct Indented<W>(W, bool);
+
+impl<W> fmt::Write for Indented<W>
+where
+    W: fmt::Write,
+{
+    fn write_str(&mut self, mut s: &str) -> fmt::Result {
+        while !s.is_empty() {
+            if self.1 {
+                self.0.write_str("    ")?;
+            }
+
+            let split = match s.find('\n') {
+                Some(pos) => {
+                    self.1 = true;
+                    pos + 1
+                }
+                None => {
+                    self.1 = false;
+                    s.len()
+                }
+            };
+            self.0.write_str(&s[..split])?;
+            s = &s[split..];
+        }
+
+        Ok(())
+    }
 }
 
-#[derive(Debug)]
-pub enum Stmt {
-    Item(Item),
-    Read(Read),
-    Write(Write),
-    Expr(Expr),
-    Binding(Binding),
+impl<B, T> fmt::Display for Scope<B, T>
+where
+    B: fmt::Display,
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "(")?;
+        for x in &self.body {
+            writeln!(Indented(&mut *f, true), "{};", x)?;
+        }
+        if let Some(x) = &self.tail {
+            writeln!(Indented(&mut *f, true), "{}", x)?;
+        }
+        write!(f, ")")
+    }
 }
 
-#[derive(Debug)]
-pub struct Read {
-    pub comps: Vec<Symbol>,
+impl<T> fmt::Display for Tuple<T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "[")?;
+        for x in &self.0 {
+            writeln!(Indented(&mut *f, true), "{},", x)?;
+        }
+        write!(f, "]")
+    }
 }
 
-#[derive(Debug)]
-pub struct Write {
-    pub comps: Vec<Symbol>,
-}
-
-#[derive(Debug)]
-pub struct Comp {
-    pub name: Symbol,
-    pub ty: Ty,
-}
-
-#[derive(Debug)]
-pub struct TyDef {
-    pub name: Symbol,
-    pub ty: Ty,
-}
-
-#[derive(Debug)]
-pub enum Ty {
-    Never,
-    Unit,
-    I32,
-    TyDef(Symbol),
-    Struct(Struct),
-    Enum(Enum),
-}
-
-#[derive(Debug)]
-pub struct Struct {
-    pub fields: Vec<(Symbol, Ty)>,
-}
-
-#[derive(Debug)]
-pub struct Enum {
-    pub fields: Vec<(Symbol, Ty)>,
-}
-
-#[derive(Debug)]
-pub struct Binding {
-    pub name: Symbol,
-    pub ty: Option<Ty>,
-    pub val: Option<Expr>,
-}
-
-#[derive(Debug)]
-pub enum Expr {
-    Literal(i32),
-    Var(Symbol),
-    Struct(Vec<(Symbol, Expr)>),
-    Dot(Box<Expr>, Symbol),
-
-    FnCall(Box<Expr>, Box<Expr>),
-    Scope(Vec<Stmt>, Option<Box<Expr>>),
+impl<T> fmt::Display for Map<T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "{{")?;
+        for (k, v) in &self.0 {
+            writeln!(Indented(&mut *f, true), "{}: {},", k, v)?;
+        }
+        write!(f, "}}")
+    }
 }
