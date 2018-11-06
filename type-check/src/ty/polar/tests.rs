@@ -5,7 +5,6 @@ use std::sync::Mutex;
 use proptest::collection::vec;
 use proptest::prelude::*;
 use proptest::strategy::Just;
-use syntax::arb_symbol;
 
 use ty::polar::{Ty, TyKind};
 use ty::{Fields, Var};
@@ -162,7 +161,7 @@ where
         prop_oneof! {
             (inner.clone(), inner.clone()).prop_map(|(l, r)| intern(TyKind::Add(l, r))),
             (inner.clone().prop_map(negate), inner.clone()).prop_map(|(d, r)| intern(TyKind::Fn(d, r))),
-            vec((arb_symbol(), inner.clone()), 0..8).prop_map(|fields| intern(TyKind::Struct(Fields::new(fields)))),
+            vec((any::<Label>(), inner.clone()), 0..8).prop_map(|fields| intern(TyKind::Struct(Fields::new(fields)))),
             inner.prop_map(|ty| intern(TyKind::Recursive(ty))),
         }
     }).prop_filter("invalid polar type", |ty| ty.check())

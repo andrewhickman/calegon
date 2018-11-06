@@ -1,10 +1,10 @@
 use proptest::prelude::*;
-use syntax::arb_symbol;
 
 use ty::automaton::dfa::Ty;
 use ty::automaton::{nfa, Automaton};
 use ty::polar;
 use variance::{Neg, Pos};
+use Label;
 
 pub fn arb_ty_pos() -> impl Strategy<Value = Ty<Pos>> {
     nfa::arb_ty_pos().prop_map(|nfa| Ty::new(&nfa))
@@ -35,8 +35,8 @@ proptest! {
     fn proptest_struct_subtyping(
         n in polar::arb_ty_neg(),
         p in polar::arb_ty_pos(),
-        a in arb_symbol(),
-        b in arb_symbol()
+        a in any::<Label>(),
+        b in any::<Label>()
     ) {
         subtype(
             polar::struct_neg(vec![

@@ -1,10 +1,12 @@
 use std::iter::FromIterator;
 use std::str::FromStr;
 
+use lazy_static::lazy_static;
 use proptest::collection::vec;
 use proptest::option;
 use proptest::prelude::*;
 use proptest::strategy::LazyJust;
+use proptest::string::string_regex;
 use proptest_recurse::{StrategyExt, StrategySet};
 
 use ast;
@@ -20,6 +22,15 @@ impl Arbitrary for ast::File {
                 .prop_map(|stmts| ast::File { stmts })
                 .sboxed()
         })
+    }
+
+    fn arbitrary() -> Self::Strategy {
+        lazy_static! {
+            static ref STRATEGY: SBoxedStrategy<ast::File> =
+                any_with::<ast::File>(StrategySet::default());
+        }
+
+        STRATEGY.clone()
     }
 }
 
@@ -99,7 +110,7 @@ impl Arbitrary for ast::Expr {
         set.get(|set| {
             any_with::<ast::expr::Lit>(set.clone())
                 .prop_map(ast::Expr::Lit)
-                .prop_mutually_recursive(4, 32, 8, set, |set| {
+                .prop_mutually_recursive(2, 16, 8, set, |set| {
                     any_with::<ast::Scope<ast::Stmt, Box<ast::Expr>>>(set.clone())
                         .prop_map(ast::Expr::Scope)
                         .sboxed()
@@ -116,7 +127,7 @@ impl Arbitrary for ast::expr::Lit {
         set.get(|set| {
             any::<i32>()
                 .prop_map(ast::expr::Lit::Int)
-                .prop_mutually_recursive(4, 32, 8, set, |set| {
+                .prop_mutually_recursive(2, 8, 8, set, |set| {
                     any_with::<ast::Map<ast::Expr>>(set.clone())
                         .prop_map(ast::expr::Lit::Struct)
                         .sboxed()
@@ -187,8 +198,14 @@ impl Arbitrary for Symbol {
     type Strategy = SBoxedStrategy<Self>;
 
     fn arbitrary_with((): Self::Parameters) -> Self::Strategy {
-        "_?[[:alpha:]](?:_?[[:alnum:]]){0,5}"
-            .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
-            .sboxed()
+        lazy_static! {
+            static ref STRATEGY: SBoxedStrategy<Symbol> =
+                string_regex("_?[[:alpha:]](?:_?[[:alnum:]]){0,5}")
+                    .unwrap()
+                    .prop_filter_map("invalid symbol", |string| Symbol::from_str(&string).ok())
+                    .sboxed();
+        }
+
+        STRATEGY.clone()
     }
 }
