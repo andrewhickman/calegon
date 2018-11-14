@@ -9,4 +9,4 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 
 [workspace]
-members = ["syntax", "type-check"]
+members = ["syntax", "type-system"]
