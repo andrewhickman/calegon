@@ -63,7 +63,7 @@ impl Automaton {
         debug_assert_eq!(self[qn].polarity(), Polarity::Neg);
         debug_assert_eq!(self[qp].polarity(), Polarity::Pos);
 
-        if self[qn].flow.contains(&qp) {
+        if self[qn].flow.contains(qp) {
             true
         } else {
             self[qn].flow.insert(qp);
@@ -103,8 +103,8 @@ impl Automaton {
                 }
             }
 
-            self[qn].flow.remove(&qp);
-            self[qp].flow.remove(&qn);
+            self[qn].flow.remove(qp);
+            self[qp].flow.remove(qn);
 
             false
         }

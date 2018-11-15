@@ -54,6 +54,12 @@ impl TransitionSet {
         )
     }
 
+    pub fn shift(&mut self, n: StateId) {
+        for tr in &mut self.inner {
+            tr.to += n;
+        }
+    }
+
     pub fn get(&self) -> &[Transition] {
         &self.inner
     }

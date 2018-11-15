@@ -2,8 +2,6 @@ pub(in automaton) mod constructor;
 pub(in automaton) mod flow;
 pub(in automaton) mod transition;
 
-use std::ops;
-
 use automaton::state::constructor::{Constructor, ConstructorSet};
 use automaton::state::flow::FlowSet;
 use automaton::state::transition::TransitionSet;
@@ -20,11 +18,6 @@ pub(in automaton) struct State {
     cons: ConstructorSet,
     trans: TransitionSet,
     pub(in automaton) flow: FlowSet,
-}
-
-#[derive(Debug, Clone)]
-pub(in automaton) struct Automaton {
-    states: Vec<State>,
 }
 
 impl State {
@@ -79,6 +72,11 @@ impl State {
         &mut self.trans
     }
 
+    pub fn shift(&mut self, n: StateId) {
+        self.trans.shift(n);
+        self.flow.shift(n);
+    }
+
     pub fn to_dstate(&self) -> Self {
         State {
             pol: self.pol,
@@ -86,47 +84,5 @@ impl State {
             trans: self.trans.clone(),
             flow: FlowSet::new(),
         }
-    }
-}
-
-impl Automaton {
-    pub fn new() -> Self {
-        Automaton { states: Vec::new() }
-    }
-
-    pub fn add(&mut self, state: State) -> StateId {
-        let id = self.states.len();
-        self.states.push(state);
-        id
-    }
-
-    pub fn reserve(&mut self, additional: usize) {
-        self.states.reserve(additional)
-    }
-}
-
-impl AsRef<Automaton> for Automaton {
-    fn as_ref(&self) -> &Automaton {
-        self
-    }
-}
-
-impl AsMut<Automaton> for Automaton {
-    fn as_mut(&mut self) -> &mut Automaton {
-        self
-    }
-}
-
-impl ops::Deref for Automaton {
-    type Target = [State];
-
-    fn deref(&self) -> &Self::Target {
-        &self.states
-    }
-}
-
-impl ops::DerefMut for Automaton {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.states
     }
 }

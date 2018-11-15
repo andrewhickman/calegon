@@ -18,10 +18,10 @@ impl Automaton {
             if !self[qp].constructors().lub_le_glb(self[qn].constructors()) {
                 return Err(());
             }
-            for to in self[qn].flow.clone() {
+            for to in self[qn].flow.iter() {
                 self.merge(to, qp);
             }
-            for from in self[qp].flow.clone() {
+            for from in self[qp].flow.iter() {
                 self.merge(from, qn)
             }
             let (domn, restp) = self[qp].transitions().split_at_domain();

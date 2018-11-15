@@ -9,6 +9,7 @@ typed-arena = "~1.4"
 hash_hasher = "~1"
 iter-set = "0.2.0"
 itertools = "0.7.8"
+int_hash = "0.1.1"
 im = "~12"
 
 [dependencies.calegon-syntax]
