@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+xs 4180267507 4204320006 2716534165 973287882 # shrinks to a = Ty { auto: Automaton { states: [State { pol: Pos, cons: {Var(Var(0))}, trans: {}, flow: FlowSet { inner: {} } }] }, start: 0, pol: Pos }, b = Ty { auto: Automaton { states: [State { pol: Pos, cons: {}, trans: {}, flow: FlowSet { inner: {} } }] }, start: 0, pol: Pos }
