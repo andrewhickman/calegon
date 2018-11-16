@@ -18,6 +18,7 @@ extern crate typed_arena;
 
 pub mod automaton;
 pub mod check;
+pub mod ir;
 pub mod polar;
 
 mod fields;

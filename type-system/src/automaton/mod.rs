@@ -8,7 +8,7 @@ use std::ops;
 use automaton::state::{State, StateId};
 
 #[derive(Debug, Clone)]
-pub(in automaton) struct Automaton {
+pub(crate) struct Automaton {
     states: Vec<State>,
 }
 

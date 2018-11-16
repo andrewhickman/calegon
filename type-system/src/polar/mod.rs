@@ -21,7 +21,7 @@ pub struct Ty<'c, P: AsPolarity + 'c> {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-enum TyKind<'c, P: AsPolarity + 'c> {
+pub enum TyKind<'c, P: AsPolarity + 'c> {
     Zero,
     I32,
     Add(Ty<'c, P>, Ty<'c, P>),

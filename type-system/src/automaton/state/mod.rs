@@ -13,7 +13,7 @@ pub(in automaton) const REJECT: StateId = usize::max_value();
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub(in automaton) struct State {
+pub(crate) struct State {
     pol: Polarity,
     cons: ConstructorSet,
     trans: TransitionSet,
@@ -46,11 +46,11 @@ impl State {
         self.pol
     }
 
-    pub fn add_constructor(&mut self, con: &Constructor) {
+    pub(in automaton) fn add_constructor(&mut self, con: &Constructor) {
         self.cons.add(self.pol, con)
     }
 
-    pub fn add_transition(&mut self, symbol: transition::Symbol, to: StateId) {
+    pub(in automaton) fn add_transition(&mut self, symbol: transition::Symbol, to: StateId) {
         self.trans.add(symbol, to)
     }
 
@@ -60,15 +60,15 @@ impl State {
         self.cons.add_set(self.pol, &other.cons);
     }
 
-    pub fn constructors(&self) -> &ConstructorSet {
+    pub(in automaton) fn constructors(&self) -> &ConstructorSet {
         &self.cons
     }
 
-    pub fn transitions(&self) -> &TransitionSet {
+    pub(in automaton) fn transitions(&self) -> &TransitionSet {
         &self.trans
     }
 
-    pub fn transitions_mut(&mut self) -> &mut TransitionSet {
+    pub(in automaton) fn transitions_mut(&mut self) -> &mut TransitionSet {
         &mut self.trans
     }
 
