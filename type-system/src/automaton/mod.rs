@@ -1,13 +1,12 @@
 pub mod dfa;
 pub mod nfa;
-
-mod state;
+pub mod state;
 
 use std::ops;
 
 use automaton::state::{State, StateId};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct Automaton {
     states: Vec<State>,
 }

@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 use std::sync::Mutex;
+use std::usize;
 
 use proptest::collection::vec;
 use proptest::prelude::*;
@@ -67,12 +68,12 @@ pub fn recursive_neg(ty: Ty<'static, Neg>) -> Ty<'static, Neg> {
     intern(TyKind::Recursive(ty))
 }
 
-pub fn var_pos(idx: usize) -> Ty<'static, Pos> {
-    intern(TyKind::Var(Var(idx)))
+pub fn var_pos(var: Var) -> Ty<'static, Pos> {
+    intern(TyKind::Var(var))
 }
 
-pub fn var_neg(idx: usize) -> Ty<'static, Neg> {
-    intern(TyKind::Var(Var(idx)))
+pub fn var_neg(var: Var) -> Ty<'static, Neg> {
+    intern(TyKind::Var(var))
 }
 
 pub fn negate_pos(ty: Ty<'static, Pos>) -> Ty<'static, Neg> {
@@ -156,7 +157,7 @@ where
     prop_oneof![
         Just(intern(TyKind::Zero)),
         Just(intern(TyKind::I32)),
-        (0usize..8).prop_map(|idx| intern(TyKind::Var(Var(idx)))),
+        (0usize..8).prop_map(|idx| intern(TyKind::Var(Var(usize::MAX - idx)))),
     ].prop_recursive(8, 32, 4, move |inner| {
         prop_oneof! {
             (inner.clone(), inner.clone()).prop_map(|(l, r)| intern(TyKind::Add(l, r))),
@@ -169,12 +170,12 @@ where
 
 #[test]
 fn guardedness() {
-    assert!(recursive_pos(fn_pos(i32_neg(), var_pos(0))).check());
-    assert!(!recursive_pos(join(i32_pos(), var_pos(0))).check());
+    assert!(recursive_pos(fn_pos(i32_neg(), var_pos(Var(0)))).check());
+    assert!(!recursive_pos(join(i32_pos(), var_pos(Var(0)))).check());
 }
 
 #[test]
 fn covariance() {
-    assert!(recursive_pos(fn_pos(fn_neg(var_pos(0), i32_neg()), i32_pos())).check());
-    assert!(!recursive_pos(fn_pos(var_neg(0), i32_pos())).check());
+    assert!(recursive_pos(fn_pos(fn_neg(var_pos(Var(0)), i32_neg()), i32_pos())).check());
+    assert!(!recursive_pos(fn_pos(var_neg(Var(0)), i32_pos())).check());
 }

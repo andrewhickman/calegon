@@ -11,7 +11,21 @@ pub struct Context {
 
 impl Var {
     pub fn binding(self, binding_depth: usize) -> Option<usize> {
+        // TODO remove
+        debug_assert!(self.0 < binding_depth || self.0 > 1_000_000);
+
         binding_depth.checked_sub(self.0.saturating_add(1))
+    }
+
+    pub fn unbound_index(self) -> usize {
+        debug_assert!(self.0 > 1_000_000);
+        usize::MAX - self.0
+    }
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Context::new()
     }
 }
 

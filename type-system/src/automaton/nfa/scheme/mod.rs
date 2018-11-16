@@ -4,7 +4,6 @@ mod tests;
 #[cfg(test)]
 pub use self::tests::*;
 
-use automaton::nfa::build;
 use automaton::state::StateId;
 use automaton::Automaton;
 use polar;
@@ -23,8 +22,12 @@ impl Scheme {
         I: IntoIterator<Item = polar::Ty<'c, Neg>>,
     {
         let mut auto = Automaton::new();
-        let expr = build(&mut auto, expr);
-        let env = env.into_iter().map(|ty| build(&mut auto, ty)).collect();
+        let expr = auto.build(expr);
+        let env = env.into_iter().map(|ty| auto.build(ty)).collect();
+        Scheme::from_parts(auto, env, expr)
+    }
+
+    pub(crate) fn from_parts(mut auto: Automaton, env: Vec<StateId>, expr: StateId) -> Self {
         auto.populate_flow();
         Scheme { auto, expr, env }
     }

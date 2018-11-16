@@ -44,15 +44,17 @@ impl FlowSet {
 
 impl Automaton {
     pub fn populate_flow(&mut self) {
+        // TODO make sure never includes bound variables
         let mut map: Vec<(Vec<StateId>, Vec<StateId>)> = Vec::new();
         for (id, state) in self.iter_mut().enumerate() {
             for var in state.constructors().vars() {
-                if map.len() <= var.0 {
-                    map.resize(var.0 + 1, (Vec::new(), Vec::new()));
+                let idx = var.unbound_index();
+                if map.len() <= idx {
+                    map.resize(idx + 1, (Vec::new(), Vec::new()));
                 }
                 match state.polarity() {
-                    Polarity::Neg => map[var.0].0.push(id),
-                    Polarity::Pos => map[var.0].1.push(id),
+                    Polarity::Neg => map[idx].0.push(id),
+                    Polarity::Pos => map[idx].1.push(id),
                 }
             }
         }

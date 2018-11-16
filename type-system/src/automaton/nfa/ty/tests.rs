@@ -4,8 +4,8 @@ use automaton::nfa::Ty;
 use automaton::state::constructor::Constructor;
 use automaton::state::transition;
 use polar;
+use var;
 use variance::{Neg, Polarity, Pos};
-use Var;
 
 pub fn arb_ty_pos() -> impl Strategy<Value = Ty<Pos>> {
     polar::arb_ty_pos().prop_map(Ty::new)
@@ -17,10 +17,15 @@ pub fn arb_ty_neg() -> impl Strategy<Value = Ty<Neg>> {
 
 #[test]
 fn test() {
+    let mut vcx = var::Context::new();
+
+    let a = vcx.push_bound();
+    let b = vcx.unbound();
     let ty = Ty::new(polar::recursive_pos(polar::fn_pos(
-        polar::fn_neg(polar::var_pos(0), polar::var_neg(1)),
-        polar::var_pos(1),
+        polar::fn_neg(polar::var_pos(a), polar::var_neg(b)),
+        polar::var_pos(b),
     )));
+    vcx.pop_bound();
     let auto = ty.as_ref();
 
     assert_eq!(auto[ty.start()].polarity(), Polarity::Pos);
@@ -34,7 +39,7 @@ fn test() {
         range[0].to
     };
     assert_eq!(auto[range].polarity(), Polarity::Pos);
-    assert!(auto[range].constructors().has(&Constructor::Var(Var(1))));
+    assert!(auto[range].constructors().has(&Constructor::Var(b)));
 
     let domain = {
         let domain = auto[ty.start()]
@@ -52,7 +57,7 @@ fn test() {
         range[0].to
     };
     assert_eq!(auto[range].polarity(), Polarity::Neg);
-    assert!(auto[range].constructors().has(&Constructor::Var(Var(1))));
+    assert!(auto[range].constructors().has(&Constructor::Var(b)));
 
     let domain = {
         let domain = auto[domain].transitions().getn(transition::Symbol::Domain);

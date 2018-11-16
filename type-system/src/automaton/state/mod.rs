@@ -7,7 +7,7 @@ use automaton::state::flow::FlowSet;
 use automaton::state::transition::TransitionSet;
 use variance::Polarity;
 
-pub(in automaton) type StateId = usize;
+pub(crate) type StateId = usize;
 
 pub(in automaton) const REJECT: StateId = usize::max_value();
 

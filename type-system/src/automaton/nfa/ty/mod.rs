@@ -4,7 +4,6 @@ mod tests;
 #[cfg(test)]
 pub use self::tests::*;
 
-use automaton::nfa::build;
 use automaton::state::StateId;
 use automaton::Automaton;
 use polar;
@@ -24,7 +23,7 @@ impl<P: AsPolarity> Ty<P> {
 
     pub fn new(ty: polar::Ty<P>) -> Self {
         let mut auto = Automaton::new();
-        let start = build(&mut auto, ty);
+        let start = auto.build(ty);
         Ty {
             auto,
             start,

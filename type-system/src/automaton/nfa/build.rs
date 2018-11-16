@@ -7,8 +7,10 @@ use automaton::Automaton;
 use variance::AsPolarity;
 use {polar, Fields, Var};
 
-pub(in automaton) fn build<P: AsPolarity>(states: &mut Automaton, ty: polar::Ty<P>) -> StateId {
-    BuildVisitor::new(states).visit(ty)
+impl Automaton {
+    pub fn build<P: AsPolarity>(&mut self, ty: polar::Ty<P>) -> StateId {
+        BuildVisitor::new(self).visit(ty)
+    }
 }
 
 struct BuildVisitor<'a> {
