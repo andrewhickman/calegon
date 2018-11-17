@@ -3,6 +3,7 @@ use std::fmt;
 use ast::Stmt;
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct File {
     pub stmts: Vec<Stmt>,
 }

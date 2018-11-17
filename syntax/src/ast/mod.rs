@@ -15,15 +15,18 @@ use std::fmt::{self, Write};
 use SymbolMap;
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Scope<B, T> {
     pub body: Vec<B>,
     pub tail: Option<T>,
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Tuple<T>(pub Vec<T>);
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Map<T>(pub SymbolMap<T>);
 
 struct Indented<W>(W, bool);

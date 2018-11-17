@@ -43,7 +43,22 @@ impl Arbitrary for ast::Stmt {
             prop_oneof![
                 any_with::<ast::Bind>(set.clone()).prop_map(ast::Stmt::Bind),
                 any_with::<ast::Expr>(set.clone()).prop_map(ast::Stmt::Expr),
+                any_with::<ast::stmt::If>(set.clone()).prop_map(ast::Stmt::If),
             ].sboxed()
+        })
+    }
+}
+
+impl Arbitrary for ast::stmt::If {
+    type Parameters = StrategySet;
+    type Strategy = SBoxedStrategy<Self>;
+
+    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
+        set.get(|set| {
+            let expr = any_with::<ast::Expr>(set.clone());
+            (expr.clone(), expr.clone())
+                .prop_map(|(cond, cons)| ast::stmt::If { cond, cons })
+                .sboxed()
         })
     }
 }
@@ -111,9 +126,13 @@ impl Arbitrary for ast::Expr {
             any_with::<ast::expr::Lit>(set.clone())
                 .prop_map(ast::Expr::Lit)
                 .prop_mutually_recursive(2, 16, 8, set, |set| {
-                    any_with::<ast::Scope<ast::Stmt, Box<ast::Expr>>>(set.clone())
-                        .prop_map(ast::Expr::Scope)
-                        .sboxed()
+                    prop_oneof![
+                        any_with::<ast::Scope<ast::Stmt, Box<ast::Expr>>>(set.clone())
+                            .prop_map(ast::Expr::Scope),
+                        any_with::<Box<ast::expr::Proj>>(set.clone()).prop_map(ast::Expr::Proj),
+                        any_with::<Box<ast::expr::If>>(set.clone()).prop_map(ast::Expr::If),
+                        any_with::<Box<ast::expr::App>>(set.clone()).prop_map(ast::Expr::App),
+                    ].sboxed()
                 })
         })
     }
@@ -125,13 +144,55 @@ impl Arbitrary for ast::expr::Lit {
 
     fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
         set.get(|set| {
-            any::<i32>()
-                .prop_map(ast::expr::Lit::Int)
-                .prop_mutually_recursive(2, 8, 8, set, |set| {
-                    any_with::<ast::Map<ast::Expr>>(set.clone())
-                        .prop_map(ast::expr::Lit::Struct)
-                        .sboxed()
-                })
+            prop_oneof![
+                any::<i32>().prop_map(ast::expr::Lit::Int),
+                any::<Symbol>().prop_map(ast::expr::Lit::Var)
+            ].prop_mutually_recursive(2, 8, 8, set, |set| {
+                any_with::<ast::Map<ast::Expr>>(set.clone())
+                    .prop_map(ast::expr::Lit::Struct)
+                    .sboxed()
+            })
+        })
+    }
+}
+
+impl Arbitrary for ast::expr::Proj {
+    type Parameters = StrategySet;
+    type Strategy = SBoxedStrategy<Self>;
+
+    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
+        set.get(|set| {
+            (any_with::<ast::Expr>(set.clone()), any::<Symbol>())
+                .prop_map(|(expr, label)| ast::expr::Proj { expr, label })
+                .sboxed()
+        })
+    }
+}
+
+impl Arbitrary for ast::expr::If {
+    type Parameters = StrategySet;
+    type Strategy = SBoxedStrategy<Self>;
+
+    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
+        set.get(|set| {
+            let expr = any_with::<ast::Expr>(set.clone());
+            (expr.clone(), expr.clone(), expr.clone())
+                .prop_map(|(cond, cons, alt)| ast::expr::If { cond, cons, alt })
+                .sboxed()
+        })
+    }
+}
+
+impl Arbitrary for ast::expr::App {
+    type Parameters = StrategySet;
+    type Strategy = SBoxedStrategy<Self>;
+
+    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
+        set.get(|set| {
+            let expr = any_with::<ast::Expr>(set.clone());
+            (expr.clone(), expr.clone())
+                .prop_map(|(fun, param)| ast::expr::App { fun, param })
+                .sboxed()
         })
     }
 }

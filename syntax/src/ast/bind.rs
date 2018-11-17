@@ -4,6 +4,7 @@ use ast::{Expr, Ty};
 use Symbol;
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Bind {
     pub name: Symbol,
     pub ty: Option<Ty>,

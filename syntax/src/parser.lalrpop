@@ -19,14 +19,19 @@ pub(crate) File: ast::File = {
 Stmt: ast::Stmt = {
     Bind => ast::Stmt::Bind(<>),
     Expr => ast::Stmt::Expr(<>),
+    IfStmt => ast::Stmt::If(<>),
 };
+
+IfStmt: ast::stmt::If = {
+    "if" <cond:Expr> "then" <cons:Expr> => ast::stmt::If { <> }
+}
 
 Bind: ast::Bind = {
     "let" <name:Symbol> <ty:(":" <Ty>)?> "=" <val:Expr> => ast::Bind { <> },
 };
 
 Ty: ast::Ty = {
-    FnTy => ast::Ty::Fn(Box::new(<>)),
+    Box<FnTy> => ast::Ty::Fn(<>),
     Ty1,
 }
 
@@ -43,13 +48,35 @@ FnTy: ast::ty::Fn = {
 }
 
 Expr: ast::Expr = {
-    LitExpr => ast::Expr::Lit(<>),
-    Scope<Stmt, BoxExpr> => ast::Expr::Scope(<>),
-};
+    Box<IfExpr> => ast::Expr::If(<>),
+    Expr1,
+}
 
-BoxExpr: Box<ast::Expr> = Expr => Box::new(<>);
+Expr1: ast::Expr = {
+    Box<AppExpr> => ast::Expr::App(<>),
+    Expr2,
+}
+
+Expr2: ast::Expr = {
+    Box<ProjExpr> => ast::Expr::Proj(<>),
+    LitExpr => ast::Expr::Lit(<>),
+    Scope<Stmt, Box<Expr>> => ast::Expr::Scope(<>),
+}
+
+IfExpr: ast::expr::If = {
+    "if" <cond:Expr> "then" <cons:Expr> "else" <alt:Expr> => ast::expr::If { <> }
+}
+
+ProjExpr: ast::expr::Proj = {
+    <expr:Expr2> "." <label:Symbol> => ast::expr::Proj { <> }
+}
+
+AppExpr: ast::expr::App = {
+    <fun:Expr2> <param:Expr> => ast::expr::App { <> }
+}
 
 LitExpr: ast::expr::Lit = {
+    Symbol => ast::expr::Lit::Var(<>),
     <l:@L> <i:Int> =>? i32::from_str(i)
         .map(ast::expr::Lit::Int)
         .map_err(|err| error(l, err)),
@@ -74,6 +101,8 @@ Map<T>: ast::Map<T> = {
     }
 }
 
+Box<T>: Box<T> = T => Box::new(<>);
+
 pub(crate) Symbol: Symbol = {
     OkSymbol => interner.intern(<>),
     <@L> BadSymbol =>? Err(error(<>, "symbol may not contain consecutive or trailing '_' characters")),
@@ -92,6 +121,9 @@ match {
     "struct",
     "enum",
     "let",
+    "if",
+    "then",
+    "else",
     // Punctuation
     ";", 
     ",",

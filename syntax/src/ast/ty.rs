@@ -3,6 +3,7 @@ use std::fmt;
 use ast::{Map, Tuple};
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum Ty {
     Tuple(Tuple<Ty>),
     Struct(Map<Ty>),
@@ -13,6 +14,7 @@ pub enum Ty {
 }
 
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct Fn {
     pub domain: Ty,
     pub range: Ty,
