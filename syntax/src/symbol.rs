@@ -4,8 +4,9 @@ use std::hash::BuildHasherDefault;
 use std::str::FromStr;
 use std::sync::{RwLock, RwLockWriteGuard};
 
-use int_hash::IntHashMap;
+use int_hash::IntBuildHasher;
 use lazy_static::lazy_static;
+use linked_hash_map::LinkedHashMap;
 use seahash::SeaHasher;
 
 use parser::SymbolParser;
@@ -14,7 +15,7 @@ use Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Symbol(u32);
 
-pub type SymbolMap<V> = IntHashMap<Symbol, V>;
+pub type SymbolMap<V> = LinkedHashMap<Symbol, V, IntBuildHasher>;
 
 impl Symbol {
     pub fn as_str(self) -> &'static str {

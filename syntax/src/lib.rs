@@ -7,6 +7,7 @@ extern crate memchr;
 #[cfg(any(test, feature = "arbitrary"))]
 #[macro_use]
 extern crate proptest;
+extern crate linked_hash_map;
 #[cfg(any(test, feature = "arbitrary"))]
 extern crate proptest_recurse;
 extern crate regex;
