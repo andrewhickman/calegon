@@ -14,24 +14,29 @@ extern {
 
 pub(crate) File: ast::File = {
     <stmts:(<Stmt> ";")*> => ast::File { <> },
-};
+}
 
 Stmt: ast::Stmt = {
-    Bind => ast::Stmt::Bind(<>),
+    LetStmt => ast::Stmt::Let(<>),
+    FunStmt => ast::Stmt::Fun(<>),
     Expr => ast::Stmt::Expr(<>),
     IfStmt => ast::Stmt::If(<>),
-};
+}
+
+LetStmt: ast::stmt::Let = {
+    "let" <name:Symbol> <ty:(":" <Ty>)?> "=" <val:Expr> => ast::stmt::Let { <> },
+}
+
+FunStmt: ast::stmt::Fun = {
+    "fun" <name:Symbol> <arg:Symbol> "=" <val:Expr> => ast::stmt::Fun { <> },
+}
 
 IfStmt: ast::stmt::If = {
     "if" <cond:Expr> "then" <cons:Expr> => ast::stmt::If { <> }
 }
 
-Bind: ast::Bind = {
-    "let" <name:Symbol> <ty:(":" <Ty>)?> "=" <val:Expr> => ast::Bind { <> },
-};
-
 Ty: ast::Ty = {
-    Box<FnTy> => ast::Ty::Fn(<>),
+    Box<FunTy> => ast::Ty::Fun(<>),
     Ty1,
 }
 
@@ -43,8 +48,8 @@ Ty1: ast::Ty = {
     "never" => ast::Ty::Never,
 }
 
-FnTy: ast::ty::Fn = {
-    <domain:Ty1> "->" <range:Ty> => ast::ty::Fn { <> },
+FunTy: ast::ty::Fun = {
+    <domain:Ty1> "->" <range:Ty> => ast::ty::Fun { <> },
 }
 
 Expr: ast::Expr = {
@@ -85,7 +90,7 @@ LitExpr: ast::expr::Lit = {
 
 Scope<B, T>: ast::Scope<B, T> = {
     "(" <body:(<B> ";")*> <tail:T?> ")" => ast::Scope { <> },
-};
+}
 
 Tuple<T>: ast::Tuple<T> = {
     "[" <init:(<T> ",")*> <tail:T?> "]" => {
@@ -121,6 +126,7 @@ match {
     "struct",
     "enum",
     "let",
+    "fun",
     "if",
     "then",
     "else",

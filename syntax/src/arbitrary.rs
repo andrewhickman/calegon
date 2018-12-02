@@ -41,10 +41,45 @@ impl Arbitrary for ast::Stmt {
     fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
         set.get(|set| {
             prop_oneof![
-                any_with::<ast::Bind>(set.clone()).prop_map(ast::Stmt::Bind),
+                any_with::<ast::stmt::Let>(set.clone()).prop_map(ast::Stmt::Let),
+                any_with::<ast::stmt::Fun>(set.clone()).prop_map(ast::Stmt::Fun),
                 any_with::<ast::Expr>(set.clone()).prop_map(ast::Stmt::Expr),
                 any_with::<ast::stmt::If>(set.clone()).prop_map(ast::Stmt::If),
             ].sboxed()
+        })
+    }
+}
+
+impl Arbitrary for ast::stmt::Let {
+    type Parameters = StrategySet;
+    type Strategy = SBoxedStrategy<Self>;
+
+    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
+        set.get(|set| {
+            (
+                any::<Symbol>(),
+                option::of(any_with::<ast::Ty>(set.clone())),
+                any_with::<ast::Expr>(set.clone()),
+            )
+                .prop_map(|(name, ty, val)| ast::stmt::Let { name, ty, val })
+                .sboxed()
+        })
+    }
+}
+
+impl Arbitrary for ast::stmt::Fun {
+    type Parameters = StrategySet;
+    type Strategy = SBoxedStrategy<Self>;
+
+    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
+        set.get(|set| {
+            (
+                any::<Symbol>(),
+                any::<Symbol>(),
+                any_with::<ast::Expr>(set.clone()),
+            )
+                .prop_map(|(name, arg, val)| ast::stmt::Fun { name, arg, val })
+                .sboxed()
         })
     }
 }
@@ -63,23 +98,6 @@ impl Arbitrary for ast::stmt::If {
     }
 }
 
-impl Arbitrary for ast::Bind {
-    type Parameters = StrategySet;
-    type Strategy = SBoxedStrategy<Self>;
-
-    fn arbitrary_with(mut set: Self::Parameters) -> Self::Strategy {
-        set.get(|set| {
-            (
-                any::<Symbol>(),
-                option::of(any_with::<ast::Ty>(set.clone())),
-                any_with::<ast::Expr>(set.clone()),
-            )
-                .prop_map(|(name, ty, val)| ast::Bind { name, ty, val })
-                .sboxed()
-        })
-    }
-}
-
 impl Arbitrary for ast::Ty {
     type Parameters = StrategySet;
     type Strategy = SBoxedStrategy<Self>;
@@ -90,18 +108,18 @@ impl Arbitrary for ast::Ty {
                 LazyJust::new(|| ast::Ty::I32),
                 LazyJust::new(|| ast::Ty::Unit),
                 LazyJust::new(|| ast::Ty::Never),
-            ].prop_mutually_recursive(4, 32, 8, set, |set| {
+            ].prop_mutually_recursive(2, 16, 8, set, |set| {
                 prop_oneof![
                     any_with::<ast::Tuple<ast::Ty>>(set.clone()).prop_map(ast::Ty::Tuple),
                     any_with::<ast::Map<ast::Ty>>(set.clone()).prop_map(ast::Ty::Struct),
-                    any_with::<Box<ast::ty::Fn>>(set.clone()).prop_map(ast::Ty::Fn),
+                    any_with::<Box<ast::ty::Fun>>(set.clone()).prop_map(ast::Ty::Fun),
                 ].sboxed()
             })
         })
     }
 }
 
-impl Arbitrary for ast::ty::Fn {
+impl Arbitrary for ast::ty::Fun {
     type Parameters = StrategySet;
     type Strategy = SBoxedStrategy<Self>;
 
@@ -111,7 +129,7 @@ impl Arbitrary for ast::ty::Fn {
                 any_with::<ast::Ty>(set.clone()),
                 any_with::<ast::Ty>(set.clone()),
             )
-                .prop_map(|(domain, range)| ast::ty::Fn { domain, range })
+                .prop_map(|(domain, range)| ast::ty::Fun { domain, range })
                 .sboxed()
         })
     }

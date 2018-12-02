@@ -1,10 +1,8 @@
-pub mod bind;
 pub mod expr;
 pub mod file;
 pub mod stmt;
 pub mod ty;
 
-pub use self::bind::Bind;
 pub use self::expr::Expr;
 pub use self::file::File;
 pub use self::stmt::Stmt;

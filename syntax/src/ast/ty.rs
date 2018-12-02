@@ -7,7 +7,7 @@ use ast::{Map, Tuple};
 pub enum Ty {
     Tuple(Tuple<Ty>),
     Struct(Map<Ty>),
-    Fn(Box<Fn>),
+    Fun(Box<Fun>),
     I32,
     Unit,
     Never,
@@ -15,7 +15,7 @@ pub enum Ty {
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
-pub struct Fn {
+pub struct Fun {
     pub domain: Ty,
     pub range: Ty,
 }
@@ -25,7 +25,7 @@ impl fmt::Display for Ty {
         match self {
             Ty::Tuple(t) => t.fmt(f),
             Ty::Struct(s) => s.fmt(f),
-            Ty::Fn(x) => x.fmt(f),
+            Ty::Fun(x) => x.fmt(f),
             Ty::I32 => "i32".fmt(f),
             Ty::Unit => "unit".fmt(f),
             Ty::Never => "never".fmt(f),
@@ -33,7 +33,7 @@ impl fmt::Display for Ty {
     }
 }
 
-impl fmt::Display for Fn {
+impl fmt::Display for Fun {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} -> {}", self.domain, self.range)
     }
