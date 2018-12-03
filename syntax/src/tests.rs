@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::iter::FromIterator;
 use std::str::FromStr;
 use std::string::ToString;
 
@@ -37,20 +38,20 @@ fn parse_stmt(input: &str) -> ast::Stmt {
     file.stmts.into_iter().next().unwrap()
 }
 
+fn parse_expr(input: &str) -> ast::Expr {
+    match parse_stmt(input) {
+        ast::Stmt::Expr(expr) => expr,
+        _ => panic!("wrong stmt type"),
+    }
+}
+
 fn var(s: &str) -> ast::Expr {
-    ast::Expr::Lit(ast::expr::Lit::Var(Symbol::from_str(s).unwrap()))
+    Symbol::from_str(s).unwrap().into()
 }
 
 #[test]
 fn expr_precedence() {
     use ast::expr::*;
-
-    fn parse_expr(input: &str) -> Expr {
-        match parse_stmt(input) {
-            ast::Stmt::Expr(expr) => expr,
-            _ => panic!("wrong stmt type"),
-        }
-    }
 
     assert_eq!(
         parse_expr("f x.a"),
@@ -114,4 +115,18 @@ fn stmt_precedence() {
             })),
         })
     );
+}
+
+#[test]
+fn map_sugar() {
+    use ast::*;
+    use SymbolMap;
+
+    assert_eq!(
+        parse_expr("{ x: a, y }"),
+        Expr::Lit(expr::Lit::Struct(Map(SymbolMap::from_iter(vec![
+            (Symbol::from_str("x").unwrap(), var("a")),
+            (Symbol::from_str("y").unwrap(), var("y")),
+        ]))))
+    )
 }

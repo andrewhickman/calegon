@@ -43,6 +43,18 @@ pub struct App {
     pub param: Expr,
 }
 
+impl From<Symbol> for Expr {
+    fn from(var: Symbol) -> Self {
+        Expr::Lit(var.into())
+    }
+}
+
+impl From<Symbol> for Lit {
+    fn from(var: Symbol) -> Self {
+        Lit::Var(var)
+    }
+}
+
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

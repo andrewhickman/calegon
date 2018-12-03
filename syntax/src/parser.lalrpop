@@ -101,9 +101,13 @@ Tuple<T>: ast::Tuple<T> = {
 }
 
 Map<T>: ast::Map<T> = {
-    "{" <init:(<Symbol> ":" <T> ",")*> <tail:(<Symbol> ":" <T>)?> "}" => {
+    "{" <init:(<MapEntry<T>> ",")*> <tail:MapEntry<T>?> "}" => {
         ast::Map(SymbolMap::from_iter(init.into_iter().chain(tail)))
     }
+}
+
+MapEntry<T>: (Symbol, T) = {
+    <key:Symbol> <val:(":" <T>)?> => (key, val.unwrap_or_else(|| key.into())),
 }
 
 Box<T>: Box<T> = T => Box::new(<>);
